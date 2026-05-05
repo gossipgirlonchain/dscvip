@@ -4,30 +4,29 @@ interface LogoProps {
   className?: string;
 }
 
+// Heights chosen to look right at each breakpoint given the logo's
+// built-in canvas padding (PNGs are 16:9 with the artwork centered).
 const sizes = {
-  sm: { mark: "w-7 h-7", text: "text-base" },
-  md: { mark: "w-8 h-8", text: "text-lg" },
-  lg: { mark: "w-10 h-10", text: "text-xl" },
+  sm: { mark: "h-6", wordmark: "h-7" },
+  md: { mark: "h-8", wordmark: "h-10" },
+  lg: { mark: "h-10", wordmark: "h-14" },
 };
 
-export function Logo({ size = "md", variant = "full", className = "" }: LogoProps) {
+export function Logo({
+  size = "md",
+  variant = "full",
+  className = "",
+}: LogoProps) {
   const s = sizes[size];
-
+  const isFull = variant === "full";
+  // eslint-disable-next-line @next/next/no-img-element
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <div className={`${s.mark} rounded-[8px] bg-dark flex items-center justify-center`}>
-        <span
-          className="font-semibold text-white leading-none"
-          style={{ fontSize: size === "lg" ? "18px" : size === "md" ? "15px" : "13px" }}
-        >
-          $
-        </span>
-      </div>
-      {variant === "full" && (
-        <span className={`${s.text} font-semibold tracking-[-0.03em] text-dark`}>
-          spenders.club
-        </span>
-      )}
+    <div className={`flex items-center ${className}`}>
+      <img
+        src={isFull ? "/dsc-wordmark.png" : "/dsc-mark.png"}
+        alt={isFull ? "Digital Spenders Club" : "_dsc"}
+        className={`${isFull ? s.wordmark : s.mark} w-auto`}
+      />
     </div>
   );
 }

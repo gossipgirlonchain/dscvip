@@ -16,8 +16,13 @@ function str(v: FormDataEntryValue | null): string {
   return String(v ?? "").trim();
 }
 
+/**
+ * Submit a signup. `token` is optional — when null, the signup is recorded
+ * untagged (used by the public root URL where the URL itself is the secret).
+ * When set, the token is validated and its use_count is incremented.
+ */
 export async function submitSignup(
-  token: string,
+  token: string | null,
   formData: FormData
 ): Promise<SubmitResult> {
   const email = str(formData.get("email"));
@@ -36,7 +41,7 @@ export async function submitSignup(
   const shorts_size = asSize(formData.get("shorts_size"));
   const sweatshirt_size = asSize(formData.get("sweatshirt_size"));
   const shoe_size = str(formData.get("shoe_size")) || null;
-  const hat_size = asSize(formData.get("hat_size")); // optional
+  const hat_size = asSize(formData.get("hat_size"));
 
   const required = {
     email,
@@ -58,25 +63,27 @@ export async function submitSignup(
 
   const supabase = createServiceRoleClient();
 
-  // Re-check token at submit time (defends against revocation between
-  // page render and submit).
-  const { data: invite, error: tokenErr } = await supabase
-    .from("gifting_invite_tokens")
-    .select("token, revoked_at, expires_at, max_uses, use_count")
-    .eq("token", token)
-    .maybeSingle();
+  // Optional token validation. When token is null we skip — the URL itself
+  // is the secret on the public root path.
+  if (token) {
+    const { data: invite, error: tokenErr } = await supabase
+      .from("gifting_invite_tokens")
+      .select("token, revoked_at, expires_at, max_uses, use_count")
+      .eq("token", token)
+      .maybeSingle();
 
-  if (tokenErr || !invite) {
-    return { ok: false, error: "This link is no longer valid." };
-  }
-  if (invite.revoked_at) {
-    return { ok: false, error: "This link has been revoked." };
-  }
-  if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-    return { ok: false, error: "This link has expired." };
-  }
-  if (invite.max_uses != null && invite.use_count >= invite.max_uses) {
-    return { ok: false, error: "This link has reached its limit." };
+    if (tokenErr || !invite) {
+      return { ok: false, error: "This link is no longer valid." };
+    }
+    if (invite.revoked_at) {
+      return { ok: false, error: "This link has been revoked." };
+    }
+    if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
+      return { ok: false, error: "This link has expired." };
+    }
+    if (invite.max_uses != null && invite.use_count >= invite.max_uses) {
+      return { ok: false, error: "This link has reached its limit." };
+    }
   }
 
   const { error: insertErr } = await supabase.from("gifting_signups").insert({
@@ -103,10 +110,20 @@ export async function submitSignup(
     return { ok: false, error: "Couldn’t save — try again in a moment." };
   }
 
-  await supabase
-    .from("gifting_invite_tokens")
-    .update({ use_count: invite.use_count + 1 })
-    .eq("token", token);
+  if (token) {
+    // Best-effort use-count bump; not fatal if it fails.
+    const { data: invite } = await supabase
+      .from("gifting_invite_tokens")
+      .select("use_count")
+      .eq("token", token)
+      .maybeSingle();
+    if (invite) {
+      await supabase
+        .from("gifting_invite_tokens")
+        .update({ use_count: (invite.use_count ?? 0) + 1 })
+        .eq("token", token);
+    }
+  }
 
   return { ok: true };
 }

@@ -28,7 +28,7 @@ export default async function AdminLogin({
         action={login}
         className="w-full max-w-sm space-y-6 rounded-[var(--radius-card)] border border-border bg-surface p-6"
       >
-        <Logo size="md" />
+        <Logo size="md" variant="mark" />
         <div>
           <h1 className="text-lg font-semibold">Admin</h1>
           <p className="text-[13px] text-muted-fg">Shared team password.</p>

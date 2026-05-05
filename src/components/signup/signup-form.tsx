@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SIZE_BANDS, type SizeBand } from "@/types/db";
-import { submitSignup } from "./actions";
+import { submitSignup } from "@/lib/actions/submit-signup";
 
 const inputClass =
   "w-full px-3.5 py-2.5 bg-surface border border-border rounded-[var(--radius-input)] text-dark text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40 transition-all duration-150";
@@ -46,7 +46,7 @@ function SizeSelect({
   );
 }
 
-export function SignupForm({ token }: { token: string }) {
+export function SignupForm({ token = null }: { token?: string | null }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -114,9 +114,7 @@ export function SignupForm({ token }: { token: string }) {
       />
 
       <div className="pt-2">
-        <p className="text-[13px] font-medium text-dark mb-3">
-          Sizing
-        </p>
+        <p className="text-[13px] font-medium text-dark mb-3">Sizing</p>
         <div className="grid grid-cols-2 gap-3">
           <SizeSelect name="shirt_size" label="Shirt" required />
           <SizeSelect name="pants_size" label="Pants" required />

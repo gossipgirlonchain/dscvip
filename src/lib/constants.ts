@@ -7,7 +7,8 @@ export const springs = {
 } as const;
 
 export const BRAND = {
-  name: "Spenders Club",
+  name: "Digital Spenders Club",
+  short: "DSC",
   domain: "spenders.club",
-  tagline: "DSC — gifting list",
+  tagline: "VIP gifting",
 } as const;

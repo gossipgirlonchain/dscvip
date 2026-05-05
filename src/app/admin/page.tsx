@@ -43,7 +43,7 @@ export default async function AdminPage() {
   return (
     <main className="flex-1 px-6 py-10 max-w-5xl w-full mx-auto space-y-10">
       <header className="flex items-center justify-between">
-        <Logo size="md" />
+        <Logo size="md" variant="mark" />
         <form action={logout}>
           <button
             type="submit"

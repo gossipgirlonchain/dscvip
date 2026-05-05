@@ -14,9 +14,10 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Spenders Club",
-  description: "DSC gifting list — invite-only signup.",
+  title: "DSC · VIP gifting",
+  description: "Digital Spenders Club — invite-only VIP gifting list.",
   robots: { index: false, follow: false },
+  icons: { icon: "/dsc-mark.png" },
 };
 
 export default function RootLayout({

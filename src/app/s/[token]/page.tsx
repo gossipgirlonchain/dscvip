@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/layout/logo";
-import { SignupForm } from "./signup-form";
+import { SignupForm } from "@/components/signup/signup-form";
 import type { InviteToken } from "@/types/db";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +54,7 @@ export default async function SecretSignupPage({
         <SignupForm token={token} />
 
         <p className="text-center text-[12px] text-muted">
-          Spenders Club · invite-only
+          Digital Spenders Club · invite-only
         </p>
       </div>
     </main>
