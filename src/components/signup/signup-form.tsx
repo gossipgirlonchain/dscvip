@@ -60,11 +60,11 @@ export function SignupForm({ token = null }: { token?: string | null }) {
   if (done) {
     return (
       <div className="text-center space-y-3 py-8">
-        <p className="text-2xl md:text-3xl font-semibold tracking-tight">
-          You&rsquo;re locked in.
+        <p className="text-[13px] font-mono tracking-[0.25em] uppercase text-dark">
+          On the list
         </p>
         <p className="text-sm md:text-base text-muted-fg max-w-sm mx-auto">
-          We&rsquo;ll be in touch when gifts go out. Watch your inbox.
+          We&rsquo;ll reach out when gifts ship.
         </p>
       </div>
     );
@@ -178,9 +178,9 @@ export function SignupForm({ token = null }: { token?: string | null }) {
         type="submit"
         size="lg"
         isLoading={pending}
-        className="w-full text-base"
+        className="w-full font-mono uppercase tracking-[0.2em] text-[13px]"
       >
-        Add me to the VIP list
+        Join the VIP list
       </Button>
     </form>
   );
