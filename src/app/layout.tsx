@@ -17,7 +17,6 @@ export const metadata: Metadata = {
   title: "DSC · VIP gifting",
   description: "Digital Spenders Club. Invite-only VIP gifting list.",
   robots: { index: false, follow: false },
-  icons: { icon: "/dsc-mark.png" },
 };
 
 export default function RootLayout({

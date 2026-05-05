@@ -45,7 +45,7 @@ export default async function SecretSignupPage({
           <p className="text-[11px] font-mono tracking-[0.25em] uppercase text-muted">
             Invite only · do not share
             {invite.label ? (
-              <span className="block normal-case tracking-normal text-[12px] font-sans text-muted-fg mt-1">
+              <span className="block normal-case tracking-normal text-[12px] text-muted-fg mt-1">
                 via {invite.label}
               </span>
             ) : null}

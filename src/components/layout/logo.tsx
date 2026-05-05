@@ -10,7 +10,7 @@ const sizes = {
   sm: { mark: "h-6", wordmark: "h-7" },
   md: { mark: "h-8", wordmark: "h-10" },
   lg: { mark: "h-10", wordmark: "h-14" },
-  hero: { mark: "h-14 md:h-20", wordmark: "h-16 md:h-24" },
+  hero: { mark: "h-24 md:h-36", wordmark: "h-32 md:h-52" },
 };
 
 export function Logo({
