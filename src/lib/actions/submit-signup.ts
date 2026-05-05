@@ -107,7 +107,7 @@ export async function submitSignup(
   });
 
   if (insertErr) {
-    return { ok: false, error: "Couldn’t save — try again in a moment." };
+    return { ok: false, error: "Couldn’t save. Try again in a moment." };
   }
 
   if (token) {
