@@ -52,8 +52,7 @@ export default async function SecretSignupPage({
           </p>
 
           <p className="text-sm md:text-base text-muted-fg max-w-md mx-auto leading-relaxed">
-            Drop your details and we&rsquo;ll send you something good when
-            we&rsquo;re back from Consensus.
+            Sign up for the VIP list and get gifts dropped from DSC, first.
           </p>
         </section>
 
