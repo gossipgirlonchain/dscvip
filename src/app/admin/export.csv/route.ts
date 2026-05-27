@@ -9,6 +9,7 @@ const HEADERS = [
   "created_at",
   "full_name",
   "email",
+  "project",
   "address_line1",
   "address_line2",
   "city_region",

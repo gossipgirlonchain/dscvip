@@ -186,6 +186,11 @@ export default async function AdminPage() {
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm font-medium">{s.full_name}</p>
+                        {s.project ? (
+                          <span className="text-[12px] text-muted-fg">
+                            · {s.project}
+                          </span>
+                        ) : null}
                         <span className="text-[12px] text-muted-fg">{s.email}</span>
                       </div>
 

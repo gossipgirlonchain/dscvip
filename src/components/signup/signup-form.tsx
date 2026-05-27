@@ -100,6 +100,11 @@ export function SignupForm({ token = null }: { token?: string | null }) {
             required
             autoComplete="name"
           />
+          <Input
+            name="project"
+            label="Project (optional)"
+            placeholder="e.g. DSC, your startup, your DAO"
+          />
         </div>
       </div>
 

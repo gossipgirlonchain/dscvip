@@ -27,6 +27,7 @@ export async function submitSignup(
 ): Promise<SubmitResult> {
   const email = str(formData.get("email"));
   const full_name = str(formData.get("full_name"));
+  const project = str(formData.get("project")) || null;
   const address_line1 = str(formData.get("address_line1"));
   const address_line2 = str(formData.get("address_line2")) || null;
   const city_region = str(formData.get("city_region"));
@@ -91,6 +92,7 @@ export async function submitSignup(
     token,
     email,
     full_name,
+    project,
     address_line1,
     address_line2,
     city_region,

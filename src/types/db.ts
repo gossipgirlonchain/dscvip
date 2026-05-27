@@ -19,6 +19,7 @@ export type Signup = {
 
   email: string;
   full_name: string;
+  project: string | null;
 
   address_line1: string;
   address_line2: string | null;
