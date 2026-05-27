@@ -18,13 +18,21 @@ export const LIFECYCLE_LABEL: Record<Lifecycle, string> = {
   archived: "Archived",
 };
 
-export type GiftStatus = "queued" | "shipped" | "delivered" | "posted";
+export type GiftStatus =
+  | "queued"
+  | "packed"
+  | "shipped"
+  | "delivered"
+  | "posted"
+  | "returned";
 
 export const GIFT_STATUSES: GiftStatus[] = [
   "queued",
+  "packed",
   "shipped",
   "delivered",
   "posted",
+  "returned",
 ];
 
 export type TouchChannel =
@@ -146,6 +154,17 @@ export type ContactGift = {
   tracking: string | null;
   notes: string | null;
   logged_by: string | null;
+  created_at: string;
+};
+
+export type NoteSource = "manual" | "paste" | "outreach";
+
+export type ContactNote = {
+  id: string;
+  contact_id: string;
+  body: string;
+  author: string | null;
+  source: NoteSource;
   created_at: string;
 };
 

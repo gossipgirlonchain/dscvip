@@ -1,8 +1,13 @@
 import { notFound, redirect } from "next/navigation";
 import { isAdminAuthed } from "@/lib/admin-auth";
 import { createServiceRoleClient } from "@/lib/supabase/server";
-import type { Contact, ContactGift, ContactTouchpoint } from "@/types/db";
-import { ContactShell, ContactPageDeleteForm } from "./contact-shell";
+import type {
+  Contact,
+  ContactGift,
+  ContactNote,
+  ContactTouchpoint,
+} from "@/types/db";
+import { ContactShell } from "./contact-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +20,7 @@ export default async function ContactPage({
   const { id } = await params;
 
   const supabase = createServiceRoleClient();
-  const [contactRes, giftsRes, touchesRes] = await Promise.all([
+  const [contactRes, giftsRes, touchesRes, notesRes] = await Promise.all([
     supabase.from("contacts").select("*").eq("id", id).maybeSingle(),
     supabase
       .from("contact_gifts")
@@ -27,23 +32,25 @@ export default async function ContactPage({
       .select("*")
       .eq("contact_id", id)
       .order("occurred_at", { ascending: false }),
+    supabase
+      .from("contact_notes")
+      .select("*")
+      .eq("contact_id", id)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (!contactRes.data) notFound();
   const contact = contactRes.data as Contact;
   const gifts = (giftsRes.data ?? []) as ContactGift[];
   const touchpoints = (touchesRes.data ?? []) as ContactTouchpoint[];
+  const notes = (notesRes.data ?? []) as ContactNote[];
 
   return (
-    <>
-      <ContactShell
-        initial={contact}
-        gifts={gifts}
-        touchpoints={touchpoints}
-      />
-      <div className="fixed bottom-3 right-4 z-30">
-        <ContactPageDeleteForm id={contact.id} />
-      </div>
-    </>
+    <ContactShell
+      initial={contact}
+      gifts={gifts}
+      touchpoints={touchpoints}
+      notes={notes}
+    />
   );
 }

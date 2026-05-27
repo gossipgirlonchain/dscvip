@@ -7,7 +7,13 @@ import type { Diff, DiffChange } from "@/lib/llm/paste-parser";
 
 type Stage = "idle" | "input" | "parsing" | "review" | "applying";
 
-export function SmartPasteButton({ contactId }: { contactId: string }) {
+export function SmartPasteButton({
+  contactId,
+  compact = false,
+}: {
+  contactId: string;
+  compact?: boolean;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
@@ -107,11 +113,13 @@ export function SmartPasteButton({ contactId }: { contactId: string }) {
           setStage("input");
         }}
         title="Cmd+Shift+V"
-        className="font-sans inline-flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-full bg-dark text-white hover:bg-dark/85 transition"
+        className={`font-sans inline-flex items-center gap-1.5 rounded-full bg-dark text-white hover:bg-dark/85 transition ${
+          compact ? "text-[11px] px-2.5 py-1" : "text-[12px] px-3 py-1.5"
+        }`}
       >
         <svg
-          width="14"
-          height="14"
+          width={compact ? 12 : 14}
+          height={compact ? 12 : 14}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"

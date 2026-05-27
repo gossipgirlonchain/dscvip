@@ -517,7 +517,6 @@ export async function applyPasteDiff(
   const contact = current as Contact;
 
   const patch: Record<string, unknown> = {};
-  const today = new Date().toISOString().slice(0, 10);
   const appended: string[] = [];
   let headsUp: string | null = null;
   let applied = 0;
@@ -549,7 +548,9 @@ export async function applyPasteDiff(
         break;
       }
       case "append_context": {
-        appended.push(`[${today} · from paste]\n${change.text.trim()}`);
+        // Date + source are rendered as a row header in the Context feed,
+        // so the body itself is just the text.
+        appended.push(change.text.trim());
         applied += 1;
         break;
       }
@@ -567,30 +568,65 @@ export async function applyPasteDiff(
     }
   }
 
-  if (appended.length > 0) {
-    const existing = (contact.notes ?? "").trim();
-    patch.notes = existing
-      ? `${existing}\n\n${appended.join("\n\n")}`
-      : appended.join("\n\n");
-  }
-
   if (headsUp !== null) {
     // If a heads_up already exists, append the new one so we don't lose context.
     const existing = (contact.heads_up ?? "").trim();
     patch.heads_up = existing ? `${existing}\n\n${headsUp}` : headsUp;
   }
 
-  if (Object.keys(patch).length === 0) {
-    return { ok: true, applied: 0, skipped };
+  if (Object.keys(patch).length > 0) {
+    const { error: updateErr } = await supabase
+      .from("contacts")
+      .update(patch)
+      .eq("id", contactId);
+    if (updateErr) return { ok: false, error: updateErr.message };
   }
 
-  const { error: updateErr } = await supabase
-    .from("contacts")
-    .update(patch)
-    .eq("id", contactId);
-  if (updateErr) return { ok: false, error: updateErr.message };
+  // Context appends become individual rows in the contact_notes feed
+  // tagged with source='paste'. Each one is independently editable.
+  if (appended.length > 0) {
+    const rows = appended.map((body) => ({
+      contact_id: contactId,
+      body,
+      source: "paste" as const,
+    }));
+    const { error: insertErr } = await supabase
+      .from("contact_notes")
+      .insert(rows);
+    if (insertErr) return { ok: false, error: insertErr.message };
+  }
 
   revalidatePath(`/admin/c/${contactId}`);
   revalidatePath("/admin");
   return { ok: true, applied, skipped };
+}
+
+/* ───── context notes feed ───── */
+
+export async function addContactNote(formData: FormData) {
+  await requireAdmin();
+  const contact_id = s(formData.get("contact_id"));
+  const body = s(formData.get("body"));
+  if (!contact_id || !body) return;
+
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase.from("contact_notes").insert({
+    contact_id,
+    body,
+    author: nullable(formData.get("author")),
+    source: "manual",
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/c/${contact_id}`);
+}
+
+export async function deleteContactNote(formData: FormData) {
+  await requireAdmin();
+  const id = s(formData.get("id"));
+  const contact_id = s(formData.get("contact_id"));
+  if (!id || !contact_id) return;
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase.from("contact_notes").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/admin/c/${contact_id}`);
 }
