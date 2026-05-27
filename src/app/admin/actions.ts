@@ -17,6 +17,120 @@ async function requireAdmin() {
   }
 }
 
+/**
+ * Generic field patcher for the contact detail page. Whitelist keeps the
+ * call surface honest — anything not in ALLOWED_FIELDS is silently dropped.
+ * Used by the autosave layer in /admin/c/[id].
+ */
+const ALLOWED_FIELDS = new Set<string>([
+  "full_name",
+  "display_name",
+  "email",
+  "project",
+  "community",
+  "base_city",
+  "timezone",
+  "x_handle",
+  "instagram_handle",
+  "telegram_handle",
+  "wallet_address",
+  "phone",
+  "introduced_by",
+  "shipping_recipient",
+  "address_line1",
+  "address_line2",
+  "city_region",
+  "country",
+  "postal_code",
+  "address_verified",
+  "lifecycle",
+  "permanent_vip",
+  "permanent_roster",
+  "owner",
+  "priority",
+  "warmth",
+  "castable",
+  "gifting_eligible",
+  "do_not_gift",
+  "do_not_engage",
+  "roster_tier",
+  "notes",
+  "tags",
+]);
+
+export async function patchContact(
+  id: string,
+  patch: Record<string, unknown>
+): Promise<{ ok: true; updated_at: string } | { ok: false; error: string }> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  if (!id) return { ok: false, error: "Missing contact id." };
+
+  const safe: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (ALLOWED_FIELDS.has(k)) safe[k] = v;
+  }
+  if (Object.keys(safe).length === 0) {
+    return { ok: false, error: "Empty patch." };
+  }
+
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .update(safe)
+    .eq("id", id)
+    .select("updated_at")
+    .maybeSingle();
+
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, updated_at: data?.updated_at ?? new Date().toISOString() };
+}
+
+export async function searchContacts(q: string): Promise<
+  Array<{
+    id: string;
+    label: string;
+    sub: string;
+    lifecycle: string;
+  }>
+> {
+  if (!(await isAdminAuthed())) return [];
+  const term = q.trim();
+  if (term.length < 1) return [];
+
+  const supabase = createServiceRoleClient();
+  const like = `%${term}%`;
+  const { data, error } = await supabase
+    .from("contacts")
+    .select(
+      "id, full_name, display_name, email, project, x_handle, telegram_handle, lifecycle"
+    )
+    .or(
+      [
+        `full_name.ilike.${like}`,
+        `display_name.ilike.${like}`,
+        `email.ilike.${like}`,
+        `project.ilike.${like}`,
+        `x_handle.ilike.${like}`,
+        `telegram_handle.ilike.${like}`,
+      ].join(",")
+    )
+    .order("updated_at", { ascending: false })
+    .limit(12);
+
+  if (error || !data) return [];
+  return data.map((r) => ({
+    id: r.id,
+    label: r.display_name || r.full_name,
+    sub:
+      [r.project, r.x_handle ? `X ${r.x_handle}` : null, r.email]
+        .filter(Boolean)
+        .join(" · ") || "",
+    lifecycle: r.lifecycle,
+  }));
+}
+
 function s(v: FormDataEntryValue | null): string {
   return String(v ?? "").trim();
 }
