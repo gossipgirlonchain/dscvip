@@ -122,6 +122,7 @@ export type Contact = {
   // Tagging + notes
   tags: string[];
   notes: string | null;
+  heads_up: string | null;
   introduced_by: string | null;
 
   // Provenance

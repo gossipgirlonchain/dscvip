@@ -6,10 +6,19 @@ import { randomBytes } from "crypto";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { isAdminAuthed, clearAdminCookie } from "@/lib/admin-auth";
 import type {
+  Contact,
   GiftStatus,
   Lifecycle,
   TouchChannel,
 } from "@/types/db";
+import {
+  parsePasteDiff,
+  isValidSizeBand,
+  SIZE_FIELDS,
+  ALLOWED_SETTABLE,
+  type Diff,
+  type DiffChange,
+} from "@/lib/llm/paste-parser";
 
 async function requireAdmin() {
   if (!(await isAdminAuthed())) {
@@ -56,6 +65,7 @@ const ALLOWED_FIELDS = new Set<string>([
   "roster_tier",
   "notes",
   "tags",
+  "heads_up",
 ]);
 
 export async function patchContact(
@@ -430,4 +440,157 @@ export async function deleteTouchpoint(formData: FormData) {
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/admin/c/${contact_id}`);
+}
+
+/* ───── smart paste: propose + apply ───── */
+
+/**
+ * Run the paste through the LLM and return the proposed diff. The diff
+ * has not been written anywhere — the client renders it for review.
+ */
+export async function proposePasteDiff(
+  contactId: string,
+  paste: string
+): Promise<
+  | { ok: true; diff: Diff }
+  | { ok: false; error: string }
+> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  const trimmed = paste.trim();
+  if (!trimmed) return { ok: false, error: "Paste is empty." };
+  if (trimmed.length > 20_000) {
+    return { ok: false, error: "Paste is too long (max 20K chars)." };
+  }
+
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", contactId)
+    .maybeSingle();
+  if (error || !data) {
+    return { ok: false, error: "Contact not found." };
+  }
+
+  try {
+    const diff = await parsePasteDiff(data as Contact, trimmed);
+    return { ok: true, diff };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown LLM error.";
+    return { ok: false, error: msg };
+  }
+}
+
+/**
+ * Apply the subset of the diff the user approved. Provenance rules:
+ *
+ * - "set" writes the field directly. Sizing fields validate against the
+ *   six-band enum; anything else is dropped.
+ * - "append_context" prepends a timestamped header (`[YYYY-MM-DD · from paste]`)
+ *   to a quoted block and appends to existing notes. Never overwrites.
+ * - "heads_up" replaces the heads_up field — only the latest matters,
+ *   the user dismisses it inline when handled.
+ * - "suggest_tag" and "mention_person" are never auto-applied; the UI
+ *   surfaces them but doesn't include them in the approved set.
+ */
+export async function applyPasteDiff(
+  contactId: string,
+  approved: DiffChange[]
+): Promise<
+  | { ok: true; applied: number; skipped: number }
+  | { ok: false; error: string }
+> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  if (!contactId) return { ok: false, error: "Missing contact id." };
+
+  const supabase = createServiceRoleClient();
+  const { data: current, error: fetchErr } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", contactId)
+    .maybeSingle();
+  if (fetchErr || !current) return { ok: false, error: "Contact not found." };
+  const contact = current as Contact;
+
+  const patch: Record<string, unknown> = {};
+  const today = new Date().toISOString().slice(0, 10);
+  const appended: string[] = [];
+  let headsUp: string | null = null;
+  let applied = 0;
+  let skipped = 0;
+
+  for (const change of approved) {
+    switch (change.kind) {
+      case "set": {
+        if (!ALLOWED_SETTABLE.has(change.field)) {
+          skipped += 1;
+          break;
+        }
+        const value = change.value.trim();
+        if (!value) {
+          skipped += 1;
+          break;
+        }
+        if (SIZE_FIELDS.has(change.field)) {
+          const upper = value.toUpperCase();
+          if (!isValidSizeBand(upper)) {
+            skipped += 1;
+            break;
+          }
+          patch[change.field] = upper;
+        } else {
+          patch[change.field] = value;
+        }
+        applied += 1;
+        break;
+      }
+      case "append_context": {
+        appended.push(`[${today} · from paste]\n${change.text.trim()}`);
+        applied += 1;
+        break;
+      }
+      case "heads_up": {
+        // Last writer wins. Includes source so the team sees where it came from.
+        headsUp = `${change.text.trim()}\n— Source: ${change.source.trim()}`;
+        applied += 1;
+        break;
+      }
+      case "suggest_tag":
+      case "mention_person":
+        // Not auto-applied. Should not appear in `approved` from the UI.
+        skipped += 1;
+        break;
+    }
+  }
+
+  if (appended.length > 0) {
+    const existing = (contact.notes ?? "").trim();
+    patch.notes = existing
+      ? `${existing}\n\n${appended.join("\n\n")}`
+      : appended.join("\n\n");
+  }
+
+  if (headsUp !== null) {
+    // If a heads_up already exists, append the new one so we don't lose context.
+    const existing = (contact.heads_up ?? "").trim();
+    patch.heads_up = existing ? `${existing}\n\n${headsUp}` : headsUp;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    return { ok: true, applied: 0, skipped };
+  }
+
+  const { error: updateErr } = await supabase
+    .from("contacts")
+    .update(patch)
+    .eq("id", contactId);
+  if (updateErr) return { ok: false, error: updateErr.message };
+
+  revalidatePath(`/admin/c/${contactId}`);
+  revalidatePath("/admin");
+  return { ok: true, applied, skipped };
 }

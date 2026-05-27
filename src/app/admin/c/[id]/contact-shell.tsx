@@ -21,6 +21,7 @@ import {
   deleteTouchpoint,
   deleteContact,
 } from "../../actions";
+import { SmartPasteButton } from "./smart-paste";
 import {
   CHANNEL_LABEL,
   GIFT_STATUSES,
@@ -535,7 +536,10 @@ function Hero() {
             </span>
           </div>
         </div>
-        <SocialsRow />
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <SmartPasteButton contactId={contact.id} />
+          <SocialsRow />
+        </div>
       </div>
 
       <p className="text-[13px] text-muted-fg flex flex-wrap gap-x-2 gap-y-0.5">
@@ -651,8 +655,37 @@ function SnapshotRail() {
       <RosterTier />
       <Flags />
       <Sizing />
+      <HeadsUpCallout />
       <ShippingMini />
     </aside>
+  );
+}
+
+function HeadsUpCallout() {
+  const { contact, patch } = useContact();
+  if (!contact.heads_up) return null;
+  return (
+    <div className="rounded-lg border border-warning/30 bg-[#FFFBEB] p-3 flex items-start gap-2.5">
+      <span className="text-warning text-[14px] leading-tight" aria-hidden>
+        ⚠
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-warning font-sans">
+          Heads up
+        </p>
+        <p className="text-[12px] text-dark whitespace-pre-line mt-1 leading-relaxed">
+          {contact.heads_up}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => patch({ heads_up: null })}
+        className="text-[11px] text-muted-fg hover:text-dark shrink-0"
+        title="Dismiss"
+      >
+        ×
+      </button>
+    </div>
   );
 }
 
