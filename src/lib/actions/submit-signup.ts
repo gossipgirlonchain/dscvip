@@ -17,9 +17,9 @@ function str(v: FormDataEntryValue | null): string {
 }
 
 /**
- * Submit a signup. `token` is optional — when null, the signup is recorded
- * untagged (used by the public root URL where the URL itself is the secret).
- * When set, the token is validated and its use_count is incremented.
+ * Public signup submission. The form is invite-only (URL itself is the
+ * secret, or a labeled `/s/[token]` link), so submissions land as VIP
+ * straight away and the team can demote later if needed.
  */
 export async function submitSignup(
   token: string | null,
@@ -60,13 +60,14 @@ export async function submitSignup(
     return { ok: false, error: "Email looks invalid." };
   }
   if (!shirt_size || !pants_size || !shorts_size || !sweatshirt_size) {
-    return { ok: false, error: "Pick a size for shirts, pants, shorts, and sweatshirts." };
+    return {
+      ok: false,
+      error: "Pick a size for shirts, pants, shorts, and sweatshirts.",
+    };
   }
 
   const supabase = createServiceRoleClient();
 
-  // Optional token validation. When token is null we skip — the URL itself
-  // is the secret on the public root path.
   if (token) {
     const { data: invite, error: tokenErr } = await supabase
       .from("gifting_invite_tokens")
@@ -88,7 +89,7 @@ export async function submitSignup(
     }
   }
 
-  const { error: insertErr } = await supabase.from("gifting_signups").insert({
+  const { error: insertErr } = await supabase.from("contacts").insert({
     token,
     email,
     full_name,
@@ -108,6 +109,7 @@ export async function submitSignup(
     shoe_size,
     hat_size,
     source: "public",
+    lifecycle: "vip",
   });
 
   if (insertErr) {
@@ -115,7 +117,6 @@ export async function submitSignup(
   }
 
   if (token) {
-    // Best-effort use-count bump; not fatal if it fails.
     const { data: invite } = await supabase
       .from("gifting_invite_tokens")
       .select("use_count")
