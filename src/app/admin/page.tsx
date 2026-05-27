@@ -168,6 +168,7 @@ export default async function AdminPage() {
             <ul className="divide-y divide-border">
               {signups.map((s) => {
                 const handles = [
+                  s.telegram_handle ? `TG ${s.telegram_handle}` : null,
                   s.x_handle ? `X ${s.x_handle}` : null,
                   s.instagram_handle ? `IG ${s.instagram_handle}` : null,
                 ].filter(Boolean);

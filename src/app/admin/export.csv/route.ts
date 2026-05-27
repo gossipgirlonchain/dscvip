@@ -14,6 +14,7 @@ const HEADERS = [
   "city_region",
   "country",
   "postal_code",
+  "telegram_handle",
   "x_handle",
   "instagram_handle",
   "shirt_size",

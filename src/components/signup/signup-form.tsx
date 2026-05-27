@@ -143,6 +143,7 @@ export function SignupForm({ token = null }: { token?: string | null }) {
       <div>
         <SectionHeading>Socials (optional)</SectionHeading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Input name="telegram_handle" label="Telegram" placeholder="@you" />
           <Input name="x_handle" label="X handle" placeholder="@you" />
           <Input
             name="instagram_handle"

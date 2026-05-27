@@ -28,6 +28,7 @@ export type Signup = {
 
   x_handle: string | null;
   instagram_handle: string | null;
+  telegram_handle: string | null;
 
   shirt_size: SizeBand;
   pants_size: SizeBand;

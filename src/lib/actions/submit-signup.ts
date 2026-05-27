@@ -35,6 +35,7 @@ export async function submitSignup(
 
   const x_handle = str(formData.get("x_handle")) || null;
   const instagram_handle = str(formData.get("instagram_handle")) || null;
+  const telegram_handle = str(formData.get("telegram_handle")) || null;
 
   const shirt_size = asSize(formData.get("shirt_size"));
   const pants_size = asSize(formData.get("pants_size"));
@@ -97,6 +98,7 @@ export async function submitSignup(
     postal_code,
     x_handle,
     instagram_handle,
+    telegram_handle,
     shirt_size,
     pants_size,
     shorts_size,
