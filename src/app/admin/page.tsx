@@ -10,11 +10,12 @@ import type {
   InviteToken,
   Lifecycle,
 } from "@/types/db";
-import { LIFECYCLES, LIFECYCLE_LABEL, GIFT_STATUSES } from "@/types/db";
-import { mintInvite, revokeInvite, updateGiftStatus } from "./actions";
+import { LIFECYCLES, LIFECYCLE_LABEL } from "@/types/db";
+import { mintInvite, revokeInvite } from "./actions";
 import { CopyLink } from "./copy-link";
 import { AdminNav } from "@/components/admin/nav";
 import { MarkPosted } from "./mark-posted";
+import { StatusSelect } from "./status-select";
 
 export const dynamic = "force-dynamic";
 
@@ -1112,31 +1113,13 @@ function PipelineCard({ gift }: { gift: PipelineGift }) {
       <div className="mt-2 flex items-center gap-1.5">
         {!isPosted ? (
           <>
-            <form
-              action={updateGiftStatus}
-              className="flex-1"
-            >
-              <input type="hidden" name="id" value={gift.id} />
-              <input type="hidden" name="contact_id" value={gift.contact_id} />
-              <select
-                name="status"
-                defaultValue={gift.status}
-                onChange={(e) => e.currentTarget.form?.requestSubmit()}
-                className="w-full font-mono text-[10px] uppercase tracking-[0.15em] px-1 py-0.5 bg-transparent cursor-pointer focus:outline-none"
-                style={{
-                  border: "1px solid rgba(14,14,14,0.2)",
-                  borderRadius: 6,
-                  color: "var(--color-ink)",
-                  appearance: "none",
-                }}
-              >
-                {GIFT_STATUSES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-            </form>
+            <div className="flex-1">
+              <StatusSelect
+                giftId={gift.id}
+                contactId={gift.contact_id}
+                value={gift.status}
+              />
+            </div>
             {gift.status === "delivered" || gift.status === "shipped" ? (
               <div className="flex-1">
                 <MarkPosted giftId={gift.id} />
