@@ -144,8 +144,12 @@ export type Contact = {
 export type ContactGift = {
   id: string;
   contact_id: string;
+  /** Legacy free-text fields. Both null for catalog-linked rows. */
   item: string;
   drop_name: string | null;
+  /** Catalog link (added 2026-05-10). Null for legacy free-text rows. */
+  product_id: string | null;
+  size: string | null;
   status: GiftStatus;
   sent_at: string | null;
   delivered_at: string | null;
@@ -166,6 +170,57 @@ export type ContactNote = {
   author: string | null;
   source: NoteSource;
   created_at: string;
+};
+
+/* Product catalog ───────────────────────────────────────────────────── */
+
+export type ProductCategory =
+  | "apparel"
+  | "accessory"
+  | "print"
+  | "hardware"
+  | "consumable";
+
+export const PRODUCT_CATEGORIES: ProductCategory[] = [
+  "apparel",
+  "accessory",
+  "print",
+  "hardware",
+  "consumable",
+];
+
+export type Drop = {
+  id: string;
+  name: string;
+  date: string | null;
+  status: "active" | "archived";
+  notes: string | null;
+  created_at: string;
+};
+
+export type Product = {
+  id: string;
+  name: string;
+  drop_id: string | null;
+  category: ProductCategory;
+  image_url: string | null;
+  /**
+   * Sizes the product is offered in. For apparel use the size_band values
+   * ("S", "M", "L", "XL", "XXL", "XXXL"). For non-sized items use "OS" or
+   * leave the array empty.
+   */
+  sizes: string[];
+  /**
+   * Per-size inventory count. Keys must be elements of `sizes`. Sizes
+   * absent from the object (or with null value) are untracked — no
+   * decrement on send, no out-of-stock warning.
+   */
+  inventory: Record<string, number | null>;
+  cost: number | null;
+  status: "active" | "archived";
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ContactTouchpoint = {

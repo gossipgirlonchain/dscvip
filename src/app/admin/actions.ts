@@ -630,3 +630,276 @@ export async function deleteContactNote(formData: FormData) {
   if (error) throw new Error(error.message);
   revalidatePath(`/admin/c/${contact_id}`);
 }
+
+/* ───── product catalog: drops ───── */
+
+export async function listDrops(): Promise<
+  Array<{ id: string; name: string; date: string | null; status: string }>
+> {
+  if (!(await isAdminAuthed())) return [];
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("drops")
+    .select("id, name, date, status")
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data;
+}
+
+export async function createDrop(
+  name: string,
+  date?: string | null
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  if (!(await isAdminAuthed()))
+    return { ok: false, error: "Not authenticated." };
+  const n = name.trim();
+  if (!n) return { ok: false, error: "Drop name required." };
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("drops")
+    .insert({ name: n, date: date || null })
+    .select("id")
+    .maybeSingle();
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? "Insert failed." };
+  }
+  revalidatePath("/admin/products");
+  return { ok: true, id: data.id };
+}
+
+/* ───── product catalog: products ───── */
+
+const PRODUCT_FIELDS = [
+  "name",
+  "drop_id",
+  "category",
+  "image_url",
+  "sizes",
+  "inventory",
+  "cost",
+  "status",
+  "notes",
+];
+
+export async function createProduct(payload: {
+  name: string;
+  drop_id?: string | null;
+  category: string;
+  image_url?: string | null;
+  sizes: string[];
+  inventory: Record<string, number | null>;
+  cost?: number | null;
+  notes?: string | null;
+}): Promise<
+  | { ok: true; id: string }
+  | { ok: false; error: string }
+> {
+  if (!(await isAdminAuthed()))
+    return { ok: false, error: "Not authenticated." };
+  const name = payload.name.trim();
+  if (!name) return { ok: false, error: "Name required." };
+
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("products")
+    .insert({
+      name,
+      drop_id: payload.drop_id || null,
+      category: payload.category,
+      image_url: payload.image_url?.trim() || null,
+      sizes: payload.sizes,
+      inventory: payload.inventory,
+      cost: payload.cost ?? null,
+      notes: payload.notes?.trim() || null,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? "Insert failed." };
+  }
+  revalidatePath("/admin/products");
+  return { ok: true, id: data.id };
+}
+
+export async function updateProduct(
+  id: string,
+  patch: Record<string, unknown>
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!(await isAdminAuthed()))
+    return { ok: false, error: "Not authenticated." };
+  if (!id) return { ok: false, error: "Missing id." };
+
+  const safe: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(patch)) {
+    if (PRODUCT_FIELDS.includes(k)) safe[k] = v;
+  }
+  if (Object.keys(safe).length === 0)
+    return { ok: false, error: "Empty patch." };
+
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase
+    .from("products")
+    .update(safe)
+    .eq("id", id);
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/products");
+  return { ok: true };
+}
+
+export async function archiveProduct(formData: FormData) {
+  await requireAdmin();
+  const id = s(formData.get("id"));
+  if (!id) return;
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ status: "archived" })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/products");
+}
+
+export async function unarchiveProduct(formData: FormData) {
+  await requireAdmin();
+  const id = s(formData.get("id"));
+  if (!id) return;
+  const supabase = createServiceRoleClient();
+  const { error } = await supabase
+    .from("products")
+    .update({ status: "active" })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/products");
+}
+
+/**
+ * Log a gift sourced from the product catalog. Decrements inventory for
+ * (product_id, size) when inventory tracking is enabled for that size
+ * (i.e. the size has a non-null integer count). Untracked sizes pass
+ * through with no decrement. Insufficient stock returns an error.
+ */
+export async function logGiftFromProduct(payload: {
+  contact_id: string;
+  product_id: string;
+  size: string | null;
+  status?: string;
+  tracking?: string | null;
+  notes?: string | null;
+  logged_by?: string | null;
+}): Promise<{ ok: true; gift_id: string } | { ok: false; error: string }> {
+  if (!(await isAdminAuthed()))
+    return { ok: false, error: "Not authenticated." };
+  const { contact_id, product_id, size } = payload;
+  if (!contact_id || !product_id) {
+    return { ok: false, error: "Missing contact or product." };
+  }
+
+  const supabase = createServiceRoleClient();
+  const { data: product, error: prodErr } = await supabase
+    .from("products")
+    .select("id, name, sizes, inventory, drop_id, drops(name)")
+    .eq("id", product_id)
+    .maybeSingle();
+  if (prodErr || !product) {
+    return { ok: false, error: "Product not found." };
+  }
+
+  // Sized products require a valid size.
+  const sizes = (product.sizes ?? []) as string[];
+  if (sizes.length > 0) {
+    if (!size) {
+      return { ok: false, error: "Size required for this product." };
+    }
+    if (!sizes.includes(size)) {
+      return { ok: false, error: `Size ${size} not offered.` };
+    }
+  }
+
+  // Inventory check + decrement (only if the size has a tracked count).
+  const inventory = (product.inventory ?? {}) as Record<string, number | null>;
+  let nextInventory: Record<string, number | null> | null = null;
+  if (size && typeof inventory[size] === "number") {
+    const remaining = inventory[size] as number;
+    if (remaining <= 0) {
+      return { ok: false, error: `// out. size ${size} depleted.` };
+    }
+    nextInventory = { ...inventory, [size]: remaining - 1 };
+  }
+
+  // Resolve drop name for legacy drop_name backfill column.
+  const dropName =
+    (product as unknown as { drops?: { name?: string } | null }).drops?.name ??
+    null;
+
+  const { data: gift, error: insertErr } = await supabase
+    .from("contact_gifts")
+    .insert({
+      contact_id,
+      product_id,
+      size,
+      item: product.name,
+      drop_name: dropName,
+      status: payload.status ?? "queued",
+      tracking: payload.tracking ?? null,
+      notes: payload.notes ?? null,
+      logged_by: payload.logged_by ?? null,
+    })
+    .select("id")
+    .maybeSingle();
+  if (insertErr || !gift) {
+    return { ok: false, error: insertErr?.message ?? "Insert failed." };
+  }
+
+  if (nextInventory) {
+    const { error: invErr } = await supabase
+      .from("products")
+      .update({ inventory: nextInventory })
+      .eq("id", product_id);
+    if (invErr) {
+      // Inventory bookkeeping failure — the gift row is already written,
+      // surface the error but don't unwind.
+      return { ok: false, error: `Logged but inventory update failed: ${invErr.message}` };
+    }
+  }
+
+  revalidatePath(`/admin/c/${contact_id}`);
+  revalidatePath("/admin/products");
+  return { ok: true, gift_id: gift.id };
+}
+
+export async function listProductsForPicker(): Promise<
+  Array<{
+    id: string;
+    name: string;
+    image_url: string | null;
+    category: string;
+    sizes: string[];
+    inventory: Record<string, number | null>;
+    drop_id: string | null;
+    drop_name: string | null;
+  }>
+> {
+  if (!(await isAdminAuthed())) return [];
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      "id, name, image_url, category, sizes, inventory, drop_id, drops(name)"
+    )
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
+    .limit(200);
+  if (error || !data) return [];
+  return data.map((p) => ({
+    id: p.id as string,
+    name: p.name as string,
+    image_url: (p.image_url as string | null) ?? null,
+    category: p.category as string,
+    sizes: (p.sizes as string[]) ?? [],
+    inventory: (p.inventory as Record<string, number | null>) ?? {},
+    drop_id: (p.drop_id as string | null) ?? null,
+    drop_name:
+      (p as unknown as { drops?: { name?: string } | null }).drops?.name ??
+      null,
+  }));
+}

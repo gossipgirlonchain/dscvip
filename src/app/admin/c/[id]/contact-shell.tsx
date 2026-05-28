@@ -14,7 +14,6 @@ import Link from "next/link";
 import {
   patchContact,
   searchContacts,
-  addGift,
   updateGiftStatus,
   deleteGift,
   addTouchpoint,
@@ -39,6 +38,7 @@ import {
   type SizeBand,
 } from "@/types/db";
 import { SmartPasteButton } from "./smart-paste";
+import { LogGiftPicker } from "./log-gift-picker";
 
 /* ─────────────────────────────────────────────────────────────────────
    Context: autosave-aware page-wide state
@@ -1582,40 +1582,17 @@ function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
       </div>
 
       {adding ? (
-        <form
-          action={async (fd) => {
-            await addGift(fd);
-            setAdding(false);
-          }}
-          className="p-3 mb-3 grid grid-cols-[1.5fr_1fr_120px_140px_120px_auto] gap-3 text-[13px]"
-          style={{
-            border: "1px solid var(--color-dsc-red)",
-            background: "var(--color-dsc-red-mist)",
-          }}
-        >
-          <input type="hidden" name="contact_id" value={contact.id} />
-          <DscField name="item" placeholder="item" required autoFocus />
-          <DscField name="drop_name" placeholder="drop" />
-          <DscSelect name="status" defaultValue="queued">
-            {GIFT_STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </DscSelect>
-          <DscField name="tracking" placeholder="tracking" mono />
-          <DscField name="logged_by" placeholder="logged by" />
-          <div className="flex items-center gap-2">
-            <DscButton type="submit">save</DscButton>
-            <button
-              type="button"
-              onClick={() => setAdding(false)}
-              className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
-            >
-              cancel
-            </button>
-          </div>
-        </form>
+        <LogGiftPicker
+          contact={contact}
+          recentProductIds={Array.from(
+            new Set(
+              gifts
+                .map((g) => g.product_id)
+                .filter((id): id is string => !!id)
+            )
+          ).slice(0, 5)}
+          onClose={() => setAdding(false)}
+        />
       ) : null}
 
       {gifts.length === 0 ? (

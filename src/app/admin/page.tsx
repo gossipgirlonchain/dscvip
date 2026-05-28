@@ -5,9 +5,9 @@ import { isAdminAuthed } from "@/lib/admin-auth";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import type { Contact, InviteToken, Lifecycle } from "@/types/db";
 import { LIFECYCLES, LIFECYCLE_LABEL } from "@/types/db";
-import { Logo } from "@/components/layout/logo";
-import { logout, mintInvite, revokeInvite } from "./actions";
+import { mintInvite, revokeInvite } from "./actions";
 import { CopyLink } from "./copy-link";
+import { AdminNav } from "@/components/admin/nav";
 
 export const dynamic = "force-dynamic";
 
@@ -194,33 +194,7 @@ export default async function AdminPage({
 
   return (
     <main className="dsc-bone relative flex-1 px-12 py-8 max-w-[1180px] w-full mx-auto space-y-6">
-      <header className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Logo size="md" variant="mark" />
-          <span
-            className="font-mono text-[10px] uppercase tracking-[0.22em]"
-            style={{ color: "var(--color-dsc-red)" }}
-          >
-            CRM · spenders.club
-          </span>
-        </div>
-        <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.18em]">
-          <Link
-            href="/admin/export.csv"
-            className="text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
-          >
-            csv
-          </Link>
-          <form action={logout}>
-            <button
-              type="submit"
-              className="text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
-            >
-              sign out
-            </button>
-          </form>
-        </div>
-      </header>
+      <AdminNav active="contacts" />
 
       {/* Lifecycle chips */}
       <section className="flex flex-wrap items-center gap-1.5">
