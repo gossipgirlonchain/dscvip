@@ -152,13 +152,16 @@ export type ContactGift = {
   size: string | null;
   status: GiftStatus;
   sent_at: string | null;
+  packed_at: string | null;
   delivered_at: string | null;
   posted_at: string | null;
+  returned_at: string | null;
   posted_url: string | null;
   tracking: string | null;
   notes: string | null;
   logged_by: string | null;
   created_at: string;
+  updated_at: string;
 };
 
 export type NoteSource = "manual" | "paste" | "outreach";

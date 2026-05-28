@@ -363,11 +363,19 @@ export async function updateGiftStatus(formData: FormData) {
   const contact_id = s(formData.get("contact_id"));
   const status = s(formData.get("status")) as GiftStatus;
   if (!id || !contact_id) return;
-  const allowed: GiftStatus[] = ["queued", "shipped", "delivered", "posted"];
+  const allowed: GiftStatus[] = [
+    "queued",
+    "packed",
+    "shipped",
+    "delivered",
+    "posted",
+    "returned",
+  ];
   if (!allowed.includes(status)) return;
 
   const now = new Date().toISOString();
   const patch: Record<string, unknown> = { status };
+  if (status === "packed") patch.packed_at = now;
   if (status === "shipped") patch.sent_at = now;
   if (status === "delivered") patch.delivered_at = now;
   if (status === "posted") {
@@ -375,6 +383,7 @@ export async function updateGiftStatus(formData: FormData) {
     const url = nullable(formData.get("posted_url"));
     if (url) patch.posted_url = url;
   }
+  if (status === "returned") patch.returned_at = now;
 
   const supabase = createServiceRoleClient();
   const { error } = await supabase
@@ -383,6 +392,46 @@ export async function updateGiftStatus(formData: FormData) {
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/admin/c/${contact_id}`);
+  revalidatePath("/admin");
+}
+
+/**
+ * Highest-leverage interaction on the pipeline dashboard. Sets the gift
+ * to POSTED, captures the post URL, and stamps posted_at. Surfaces in the
+ * POSTED column + flips contact.has_ever_posted (derived).
+ */
+export async function markGiftPosted(
+  giftId: string,
+  postUrl: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  if (!giftId) return { ok: false, error: "Missing gift id." };
+
+  const supabase = createServiceRoleClient();
+  const { data: gift, error: fetchErr } = await supabase
+    .from("contact_gifts")
+    .select("contact_id")
+    .eq("id", giftId)
+    .maybeSingle();
+  if (fetchErr || !gift) {
+    return { ok: false, error: "Gift not found." };
+  }
+
+  const { error } = await supabase
+    .from("contact_gifts")
+    .update({
+      status: "posted",
+      posted_at: new Date().toISOString(),
+      posted_url: postUrl.trim() || null,
+    })
+    .eq("id", giftId);
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/admin");
+  revalidatePath(`/admin/c/${gift.contact_id}`);
+  return { ok: true };
 }
 
 export async function deleteGift(formData: FormData) {

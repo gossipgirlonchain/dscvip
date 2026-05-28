@@ -89,6 +89,7 @@ export default async function StockPage({
   return (
     <main className="dsc-bone relative flex-1 px-12 py-8 max-w-[1180px] w-full mx-auto space-y-6">
       <AdminNav active="stock" />
+      {/* note: stock here, pipeline lives at /admin */}
       <StockShell
         products={products}
         drops={drops}

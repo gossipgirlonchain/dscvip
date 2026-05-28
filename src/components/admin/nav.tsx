@@ -3,17 +3,18 @@ import { Logo } from "@/components/layout/logo";
 import { logout } from "@/app/admin/actions";
 
 /**
- * Top nav for /admin pages. STOCK / CONTACTS toggle.
- * DSC voice — oxblood active state, mono uppercase tracked labels.
+ * Top nav for /admin pages. PIPELINE (home, ships + KPIs + contacts list)
+ * and STOCK (product catalog). DSC voice — oxblood active state, mono
+ * uppercase tracked labels.
  */
-export function AdminNav({ active }: { active: "contacts" | "stock" }) {
+export function AdminNav({ active }: { active: "pipeline" | "stock" }) {
   return (
     <header className="flex items-center justify-between gap-4">
       <div className="flex items-center gap-4">
         <Logo size="md" variant="mark" />
         <nav className="flex items-center gap-3">
-          <NavLink href="/admin" active={active === "contacts"}>
-            contacts
+          <NavLink href="/admin" active={active === "pipeline"}>
+            pipeline
           </NavLink>
           <NavLink href="/admin/products" active={active === "stock"}>
             stock
