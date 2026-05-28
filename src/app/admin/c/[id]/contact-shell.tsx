@@ -144,7 +144,6 @@ export function ContactShell({
       <main className="dsc-bone relative font-sans text-[var(--color-ink)] mx-auto w-full max-w-[1180px] px-12 pt-6 pb-28">
         <PageChrome />
         <div className="relative z-10">
-          <SpecLabel />
           <Hero />
           <HeadsUpCallout />
           <SnapshotStrip />
@@ -169,14 +168,6 @@ export function ContactShell({
    Page chrome — coil perimeter trace + chip mark with UUID hash.
    The brief says these have to be on screen at all times.
    ───────────────────────────────────────────────────────────────────── */
-
-function shortHash(s: string, len = 6): string {
-  // Lightweight deterministic 6-char hex from any string. Not crypto.
-  let h = 5381;
-  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
-  const hex = (h >>> 0).toString(16).padStart(8, "0");
-  return hex.slice(0, len).toUpperCase();
-}
 
 function PageChrome() {
   // v3: only the coil earns its space. Chip mark and registration
@@ -214,19 +205,6 @@ function PageChrome() {
   );
 }
 
-function SpecLabel() {
-  const { contact } = useContact();
-  const idHash = shortHash(contact.id, 4);
-  const revHash = shortHash(contact.updated_at, 1);
-  const tier = contact.lifecycle.toUpperCase();
-  return (
-    <div className="mb-3 inline-block">
-      <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-[var(--color-dsc-red)] border border-[var(--color-dsc-red)] px-2 py-0.5">
-        SPECIMEN · {tier}-{idHash} · REV.{revHash}
-      </span>
-    </div>
-  );
-}
 
 function MirroredFooter() {
   const { contact } = useContact();
