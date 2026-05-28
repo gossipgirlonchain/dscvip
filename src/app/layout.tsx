@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Sans_Condensed, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Condensed grotesk for headlines, body display, and chrome. Replaces
+// the old Inter — Inter reads too SaaS for the DSC aesthetic.
+const display = IBM_Plex_Sans_Condensed({
+  variable: "--font-display",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
@@ -27,7 +30,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
+      className={`${display.variable} ${jetbrainsMono.variable} h-full`}
     >
       <body className="min-h-full flex flex-col antialiased">
         <Providers>{children}</Providers>

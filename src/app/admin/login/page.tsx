@@ -23,32 +23,63 @@ export default async function AdminLogin({
   const { error } = await searchParams;
 
   return (
-    <main className="flex-1 flex items-center justify-center px-6 py-16">
+    <main className="dsc-bone flex-1 flex items-center justify-center px-6 py-16">
       <form
         action={login}
-        className="w-full max-w-sm space-y-6 rounded-[var(--radius-card)] border border-border bg-surface p-6"
+        className="w-full max-w-sm space-y-5 p-6"
+        style={{ border: "1px solid var(--color-dsc-red)" }}
       >
-        <Logo size="md" variant="mark" />
+        <div className="flex items-center gap-3">
+          <Logo size="md" variant="mark" />
+          <span
+            className="font-mono text-[10px] uppercase tracking-[0.22em]"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            CRM · spenders.club
+          </span>
+        </div>
         <div>
-          <h1 className="text-lg font-semibold">Admin</h1>
-          <p className="text-[13px] text-muted-fg">Shared team password.</p>
+          <p
+            className="font-mono text-[9px] uppercase tracking-[0.22em]"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            // restricted access
+          </p>
+          <p className="text-[12px] text-[var(--color-muted-deep)] mt-1">
+            Shared team password. Sessions live 12 hours.
+          </p>
         </div>
         <input
           name="password"
           type="password"
           autoFocus
           required
-          placeholder="Password"
-          className="w-full px-3.5 py-2.5 bg-offwhite border border-border rounded-[var(--radius-input)] text-dark text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40"
+          placeholder="password"
+          className="w-full px-1 py-2 text-[14px] focus:outline-none bg-transparent placeholder:text-[var(--color-muted)]"
+          style={{
+            borderBottom: "1px solid rgba(14,14,14,0.2)",
+            color: "var(--color-ink)",
+          }}
         />
         {error ? (
-          <p className="text-[13px] text-error">Wrong password.</p>
+          <p
+            className="font-mono text-[11px] uppercase tracking-[0.18em]"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            // wrong password.
+          </p>
         ) : null}
         <button
           type="submit"
-          className="w-full rounded-[var(--radius-button)] bg-dark text-white px-5 py-2.5 text-sm font-medium hover:bg-dark/85 transition"
+          className="w-full font-mono text-[10px] uppercase tracking-[0.22em] px-5 py-2.5 transition"
+          style={{
+            border: "1px solid var(--color-dsc-red)",
+            background: "transparent",
+            color: "var(--color-dsc-red)",
+            borderRadius: 2,
+          }}
         >
-          Enter
+          enter
         </button>
       </form>
     </main>

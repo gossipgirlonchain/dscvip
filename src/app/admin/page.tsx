@@ -37,11 +37,28 @@ function fmtRelative(iso: string): string {
   return `${Math.floor(months / 12)}y ago`;
 }
 
-const LIFECYCLE_PILL: Record<Lifecycle, string> = {
-  vip: "bg-dark text-white",
-  roster: "bg-primary-light text-primary border border-primary/20",
-  audience: "bg-offwhite text-muted-fg border border-border",
-  archived: "bg-muted/10 text-muted line-through",
+const LIFECYCLE_PILL: Record<Lifecycle, React.CSSProperties> = {
+  vip: {
+    border: "1px solid var(--color-dsc-red)",
+    background: "var(--color-dsc-red)",
+    color: "var(--color-bone)",
+  },
+  roster: {
+    border: "1px solid var(--color-dsc-red)",
+    background: "transparent",
+    color: "var(--color-dsc-red)",
+  },
+  audience: {
+    border: "1px solid var(--color-muted)",
+    background: "transparent",
+    color: "var(--color-muted-deep)",
+  },
+  archived: {
+    border: "1px dashed var(--color-muted)",
+    background: "transparent",
+    color: "var(--color-muted)",
+    textDecoration: "line-through",
+  },
 };
 
 export default async function AdminPage({
@@ -156,83 +173,117 @@ export default async function AdminPage({
   }
 
   const chipBase =
-    "px-3 py-1.5 rounded-[var(--radius-pill)] text-[11px] font-mono uppercase tracking-[0.15em] transition";
-  const chipActive = "bg-dark text-white";
-  const chipIdle = "bg-surface border border-border hover:border-border-hover";
+    "px-2.5 py-1 text-[10px] font-mono uppercase tracking-[0.18em] transition";
+  const chipActiveStyle: React.CSSProperties = {
+    border: "1px solid var(--color-dsc-red)",
+    background: "var(--color-dsc-red)",
+    color: "var(--color-bone)",
+    borderRadius: 2,
+  };
+  const chipIdleStyle: React.CSSProperties = {
+    border: "1px solid var(--color-dsc-red)",
+    background: "transparent",
+    color: "var(--color-dsc-red)",
+    borderRadius: 2,
+  };
+  const inputStyle: React.CSSProperties = {
+    borderBottom: "1px solid rgba(14,14,14,0.2)",
+    color: "var(--color-ink)",
+    background: "transparent",
+  };
 
   return (
-    <main className="flex-1 px-6 py-8 max-w-7xl w-full mx-auto space-y-8">
+    <main className="dsc-bone relative flex-1 px-12 py-8 max-w-[1180px] w-full mx-auto space-y-6">
       <header className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Logo size="md" variant="mark" />
-          <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-fg">
-            CRM
+          <span
+            className="font-mono text-[10px] uppercase tracking-[0.22em]"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            CRM · spenders.club
           </span>
         </div>
-        <div className="flex items-center gap-4 text-[12px] text-muted-fg">
-          <Link href="/admin/export.csv" className="hover:text-dark">
-            CSV
+        <div className="flex items-center gap-4 font-mono text-[10px] uppercase tracking-[0.18em]">
+          <Link
+            href="/admin/export.csv"
+            className="text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
+          >
+            csv
           </Link>
           <form action={logout}>
-            <button type="submit" className="hover:text-dark">
-              Sign out
+            <button
+              type="submit"
+              className="text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
+            >
+              sign out
             </button>
           </form>
         </div>
       </header>
 
       {/* Lifecycle chips */}
-      <section className="flex flex-wrap items-center gap-2">
+      <section className="flex flex-wrap items-center gap-1.5">
         <Link
           href={urlWith({ lifecycle: undefined })}
-          className={`${chipBase} ${!lifecycleFilter ? chipActive : chipIdle}`}
+          className={chipBase}
+          style={!lifecycleFilter ? chipActiveStyle : chipIdleStyle}
         >
-          All <span className="opacity-60 ml-1">{totals.all}</span>
+          all <span className="opacity-70 ml-1">[{totals.all}]</span>
         </Link>
         {LIFECYCLES.map((lc) => (
           <Link
             key={lc}
             href={urlWith({ lifecycle: lc })}
-            className={`${chipBase} ${
-              lifecycleFilter === lc ? chipActive : chipIdle
-            }`}
+            className={chipBase}
+            style={
+              lifecycleFilter === lc ? chipActiveStyle : chipIdleStyle
+            }
           >
-            {LIFECYCLE_LABEL[lc]}{" "}
-            <span className="opacity-60 ml-1">{totals[lc]}</span>
+            {LIFECYCLE_LABEL[lc].toLowerCase()}{" "}
+            <span className="opacity-70 ml-1">[{totals[lc]}]</span>
           </Link>
         ))}
       </section>
 
-      {/* Search + filters */}
+      {/* Search + filters — bottom-hairline-only inputs */}
       <form
         action="/admin"
         method="get"
-        className="flex flex-wrap items-end gap-3"
+        className="flex flex-wrap items-end gap-4"
       >
         {lifecycleFilter ? (
           <input type="hidden" name="lifecycle" value={lifecycleFilter} />
         ) : null}
         <div className="flex-1 min-w-[220px]">
-          <label className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-fg block mb-1">
-            Search
+          <label
+            className="font-mono text-[9px] uppercase tracking-[0.22em] block mb-1"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            search
           </label>
           <input
             name="q"
             defaultValue={q}
             placeholder="name, email, project, handle"
-            className="w-full px-3 py-2 bg-surface border border-border rounded-[var(--radius-input)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40"
+            className="w-full px-1 py-1.5 text-[13px] focus:outline-none placeholder:text-[var(--color-muted)]"
+            style={inputStyle}
           />
         </div>
         <div className="w-[160px]">
-          <label className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-fg block mb-1">
-            Owner
+          <label
+            className="font-mono text-[9px] uppercase tracking-[0.22em] block mb-1"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            owner
           </label>
           <select
             name="owner"
             defaultValue={ownerFilter}
-            className="w-full px-3 py-2 bg-surface border border-border rounded-[var(--radius-input)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40"
+            className="w-full px-1 py-1.5 text-[13px] focus:outline-none cursor-pointer"
+            style={{ ...inputStyle, appearance: "none" }}
           >
-            <option value="">Any</option>
+            <option value="">any</option>
             {owners.map((o) => (
               <option key={o} value={o}>
                 {o}
@@ -241,15 +292,19 @@ export default async function AdminPage({
           </select>
         </div>
         <div className="w-[160px]">
-          <label className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-fg block mb-1">
-            Tag
+          <label
+            className="font-mono text-[9px] uppercase tracking-[0.22em] block mb-1"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            tag
           </label>
           <select
             name="tag"
             defaultValue={tagFilter}
-            className="w-full px-3 py-2 bg-surface border border-border rounded-[var(--radius-input)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40"
+            className="w-full px-1 py-1.5 text-[13px] focus:outline-none cursor-pointer"
+            style={{ ...inputStyle, appearance: "none" }}
           >
-            <option value="">Any</option>
+            <option value="">any</option>
             {allTags.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -259,50 +314,70 @@ export default async function AdminPage({
         </div>
         <button
           type="submit"
-          className="rounded-[var(--radius-button)] bg-dark text-white px-4 py-2 text-sm font-mono uppercase tracking-[0.15em] hover:bg-dark/85 transition"
+          className="font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-1.5 transition"
+          style={{
+            border: "1px solid var(--color-dsc-red)",
+            background: "transparent",
+            color: "var(--color-dsc-red)",
+            borderRadius: 2,
+          }}
         >
-          Filter
+          filter
         </button>
         {q || tagFilter || ownerFilter ? (
           <Link
             href={urlWith({ q: undefined, tag: undefined, owner: undefined })}
-            className="text-[12px] text-muted-fg hover:text-dark"
+            className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
           >
-            Clear
+            clear
           </Link>
         ) : null}
       </form>
 
       {/* Contacts table */}
-      <section className="rounded-[var(--radius-card)] border border-border bg-surface overflow-hidden">
+      <section className="relative">
         {contacts.length === 0 ? (
-          <p className="px-4 py-16 text-center text-[13px] text-muted">
-            No contacts match these filters.
+          <p
+            className="py-12 font-mono text-[11px] uppercase tracking-[0.18em]"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            // no contacts match these filters.
           </p>
         ) : (
           <table className="w-full text-sm">
-            <thead className="bg-offwhite border-b border-border">
-              <tr className="text-left text-[11px] font-mono uppercase tracking-[0.15em] text-muted-fg">
-                <th className="px-4 py-2.5 font-normal">Name</th>
-                <th className="px-2 py-2.5 font-normal">Project</th>
-                <th className="px-2 py-2.5 font-normal">Stage</th>
-                <th className="px-2 py-2.5 font-normal">Owner</th>
-                <th className="px-2 py-2.5 font-normal">Tags</th>
-                <th className="px-2 py-2.5 font-normal">Updated</th>
-                <th className="px-4 py-2.5 font-normal">{""}</th>
+            <thead>
+              <tr
+                className="text-left font-mono text-[10px] uppercase tracking-[0.18em]"
+                style={{
+                  color: "var(--color-dsc-red)",
+                  borderBottom: "1px solid var(--color-dsc-red)",
+                }}
+              >
+                <th className="py-2 pr-3 font-normal">name</th>
+                <th className="py-2 pr-3 font-normal">project</th>
+                <th className="py-2 pr-3 font-normal">stage</th>
+                <th className="py-2 pr-3 font-normal">owner</th>
+                <th className="py-2 pr-3 font-normal">tags</th>
+                <th className="py-2 pr-3 font-normal">updated</th>
+                <th className="py-2 font-normal" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {contacts.map((c) => (
-                <tr key={c.id} className="hover:bg-offwhite/60 transition">
-                  <td className="px-4 py-3 align-top">
+                <tr
+                  key={c.id}
+                  className="hover:bg-[var(--color-bone-deep)] transition"
+                  style={{ borderBottom: "1px solid rgba(14,14,14,0.08)" }}
+                >
+                  <td className="py-2.5 pr-3 align-top">
                     <Link
                       href={`/admin/c/${c.id}`}
-                      className="font-medium hover:underline"
+                      className="font-medium hover:text-[var(--color-dsc-red)]"
+                      style={{ fontFamily: "var(--font-display)" }}
                     >
                       {c.display_name || c.full_name}
                     </Link>
-                    <div className="text-[11px] text-muted-fg">
+                    <div className="text-[11px] text-[var(--color-muted)] font-mono">
                       {[
                         c.x_handle ? `X ${c.x_handle}` : null,
                         c.telegram_handle ? `TG ${c.telegram_handle}` : null,
@@ -311,39 +386,47 @@ export default async function AdminPage({
                         .join(" · ") || c.email}
                     </div>
                   </td>
-                  <td className="px-2 py-3 align-top text-[13px]">
-                    {c.project ?? <span className="text-muted">—</span>}
+                  <td className="py-2.5 pr-3 align-top text-[13px]">
+                    {c.project ?? (
+                      <span className="text-[var(--color-muted)]">—</span>
+                    )}
                   </td>
-                  <td className="px-2 py-3 align-top">
+                  <td className="py-2.5 pr-3 align-top">
                     <span
-                      className={`inline-block px-2 py-0.5 rounded-[var(--radius-pill)] text-[10px] font-mono uppercase tracking-[0.15em] ${LIFECYCLE_PILL[c.lifecycle]}`}
+                      className="inline-block px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em]"
+                      style={{ ...LIFECYCLE_PILL[c.lifecycle], borderRadius: 2 }}
                     >
-                      {LIFECYCLE_LABEL[c.lifecycle]}
+                      {LIFECYCLE_LABEL[c.lifecycle].toLowerCase()}
                     </span>
                     {c.permanent_vip ? (
-                      <span className="ml-1 text-[10px] font-mono uppercase tracking-[0.15em] text-primary">
+                      <span
+                        className="ml-1 text-[10px] font-mono uppercase tracking-[0.18em]"
+                        style={{ color: "var(--color-dsc-red)" }}
+                      >
                         ★ perma
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-2 py-3 align-top text-[13px]">
-                    {c.owner ?? <span className="text-muted">—</span>}
+                  <td className="py-2.5 pr-3 align-top text-[13px]">
+                    {c.owner ?? (
+                      <span className="text-[var(--color-muted)]">—</span>
+                    )}
                   </td>
-                  <td className="px-2 py-3 align-top text-[11px] font-mono text-muted-fg">
+                  <td className="py-2.5 pr-3 align-top text-[11px] font-mono text-[var(--color-muted-deep)]">
                     {c.tags.length === 0
                       ? "—"
                       : c.tags.slice(0, 3).join(" · ") +
                         (c.tags.length > 3 ? ` +${c.tags.length - 3}` : "")}
                   </td>
-                  <td className="px-2 py-3 align-top text-[11px] text-muted-fg">
+                  <td className="py-2.5 pr-3 align-top text-[11px] font-mono text-[var(--color-muted)]">
                     {fmtRelative(c.updated_at)}
                   </td>
-                  <td className="px-4 py-3 align-top text-right">
+                  <td className="py-2.5 align-top text-right">
                     <Link
                       href={`/admin/c/${c.id}`}
-                      className="text-[12px] font-mono uppercase tracking-[0.15em] text-muted-fg hover:text-dark"
+                      className="text-[10px] font-mono uppercase tracking-[0.18em] text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
                     >
-                      Open →
+                      open →
                     </Link>
                   </td>
                 </tr>
@@ -353,62 +436,91 @@ export default async function AdminPage({
         )}
       </section>
 
-      {/* Invite links — compressed below the fold since they're rarely touched */}
-      <section className="space-y-3 pt-4 border-t border-border">
-        <div className="flex items-baseline justify-between">
-          <h2 className="text-[11px] font-mono uppercase tracking-[0.2em] text-muted-fg">
-            Invite links
+      {/* Invite links — compressed below the fold */}
+      <section
+        className="space-y-3 pt-4"
+        style={{ borderTop: "1px solid rgba(14,14,14,0.12)" }}
+      >
+        <div
+          className="flex items-baseline justify-between pb-1"
+          style={{ borderBottom: "1px solid var(--color-dsc-red)" }}
+        >
+          <h2
+            className="font-mono text-[10px] uppercase tracking-[0.2em]"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            invite links
           </h2>
-          <span className="text-[11px] text-muted">
-            {tokens.filter((t) => !t.revoked_at).length} active
+          <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
+            [{tokens.filter((t) => !t.revoked_at).length} active]
           </span>
         </div>
 
         <form
           action={mintInvite}
-          className="flex flex-wrap gap-2 items-end rounded-[var(--radius-card)] border border-border bg-surface p-3"
+          className="flex flex-wrap gap-3 items-end p-3"
+          style={{
+            border: "1px solid var(--color-dsc-red)",
+            background: "var(--color-dsc-red-mist)",
+          }}
         >
           <input
             name="label"
-            placeholder="Label (e.g. anthony @ consensus)"
-            className="flex-1 min-w-[180px] px-3 py-2 bg-offwhite border border-border rounded-[var(--radius-input)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40"
+            placeholder="label (e.g. anthony @ consensus)"
+            className="flex-1 min-w-[180px] px-1 py-1.5 text-[13px] focus:outline-none placeholder:text-[var(--color-muted)] bg-transparent"
+            style={{ borderBottom: "1px solid rgba(14,14,14,0.2)" }}
           />
           <input
             name="created_by"
-            placeholder="By"
-            className="w-[120px] px-3 py-2 bg-offwhite border border-border rounded-[var(--radius-input)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/40"
+            placeholder="by"
+            className="w-[120px] px-1 py-1.5 text-[13px] focus:outline-none placeholder:text-[var(--color-muted)] bg-transparent"
+            style={{ borderBottom: "1px solid rgba(14,14,14,0.2)" }}
           />
           <button
             type="submit"
-            className="rounded-[var(--radius-button)] bg-dark text-white px-3 py-2 text-[12px] font-mono uppercase tracking-[0.15em] hover:bg-dark/85 transition"
+            className="font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-1.5 transition"
+            style={{
+              border: "1px solid var(--color-dsc-red)",
+              background: "transparent",
+              color: "var(--color-dsc-red)",
+              borderRadius: 2,
+            }}
           >
-            Mint
+            mint
           </button>
         </form>
 
         {tokens.length > 0 ? (
-          <ul className="rounded-[var(--radius-card)] border border-border bg-surface divide-y divide-border">
+          <ul>
             {tokens.map((t) => {
               const url = `${origin}/s/${t.token}`;
               const revoked = !!t.revoked_at;
               return (
                 <li
                   key={t.token}
-                  className="px-3 py-2.5 flex flex-wrap items-center gap-3"
+                  className="py-2.5 flex flex-wrap items-center gap-3"
+                  style={{ borderBottom: "1px solid rgba(14,14,14,0.08)" }}
                 >
                   <div className="flex-1 min-w-[200px]">
                     <p className="text-[13px]">
-                      {t.label ?? <span className="text-muted">Unlabeled</span>}
+                      {t.label ?? (
+                        <span className="text-[var(--color-muted)] italic">
+                          unlabeled
+                        </span>
+                      )}
                       {revoked ? (
-                        <span className="ml-2 text-[10px] font-mono uppercase tracking-[0.15em] text-error">
+                        <span
+                          className="ml-2 text-[10px] font-mono uppercase tracking-[0.18em]"
+                          style={{ color: "var(--color-dsc-red)" }}
+                        >
                           revoked
                         </span>
                       ) : null}
                     </p>
-                    <p className="text-[11px] text-muted-fg font-mono break-all">
+                    <p className="text-[11px] text-[var(--color-muted-deep)] font-mono break-all">
                       {url}
                     </p>
-                    <p className="text-[10px] text-muted">
+                    <p className="text-[10px] font-mono text-[var(--color-muted)]">
                       {t.use_count} signups
                       {t.created_by ? ` · by ${t.created_by}` : ""}
                     </p>
@@ -419,9 +531,10 @@ export default async function AdminPage({
                       <input type="hidden" name="token" value={t.token} />
                       <button
                         type="submit"
-                        className="text-[11px] font-mono uppercase tracking-[0.15em] text-error hover:underline"
+                        className="font-mono text-[10px] uppercase tracking-[0.18em] hover:underline"
+                        style={{ color: "var(--color-dsc-red)" }}
                       >
-                        Revoke
+                        revoke
                       </button>
                     </form>
                   ) : null}

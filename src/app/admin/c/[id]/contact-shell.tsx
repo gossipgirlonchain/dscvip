@@ -141,22 +141,152 @@ export function ContactShell({
     <ContactCtx.Provider value={ctx}>
       <CommandPalette />
       <StickyHeader />
-      <main className="font-sans text-dark mx-auto w-full max-w-[1180px] px-6 pt-6 pb-24">
-        <Hero />
-        <HeadsUpCallout />
-        <SnapshotStrip />
-        <GiftsLedger gifts={gifts} />
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-8">
-          <ContextFeed notes={notes} />
-          <OutreachFeed touchpoints={touchpoints} />
+      <main className="dsc-bone relative font-sans text-[var(--color-ink)] mx-auto w-full max-w-[1180px] px-12 pt-6 pb-28">
+        <PageChrome />
+        <div className="relative z-10">
+          <SpecLabel />
+          <Hero />
+          <HeadsUpCallout />
+          <SnapshotStrip />
+          <GiftsLedger gifts={gifts} />
+          <div className="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-8">
+            <ContextFeed notes={notes} />
+            <OutreachFeed touchpoints={touchpoints} />
+          </div>
+          <ActivityAccordion
+            gifts={gifts}
+            touchpoints={touchpoints}
+            notes={notes}
+          />
         </div>
-        <ActivityAccordion
-          gifts={gifts}
-          touchpoints={touchpoints}
-          notes={notes}
-        />
+        <MirroredFooter />
       </main>
     </ContactCtx.Provider>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Page chrome — coil perimeter trace + chip mark with UUID hash.
+   The brief says these have to be on screen at all times.
+   ───────────────────────────────────────────────────────────────────── */
+
+function shortHash(s: string, len = 6): string {
+  // Lightweight deterministic 6-char hex from any string. Not crypto.
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0;
+  const hex = (h >>> 0).toString(16).padStart(8, "0");
+  return hex.slice(0, len).toUpperCase();
+}
+
+function PageChrome() {
+  const { contact } = useContact();
+  const idHash = shortHash(contact.id, 6);
+
+  return (
+    <>
+      {/* Perimeter coil trace — 1px oxblood hairline inset 24px */}
+      <div
+        aria-hidden
+        className="absolute pointer-events-none"
+        style={{
+          top: 24,
+          right: 24,
+          bottom: 24,
+          left: 24,
+          border: "1px solid var(--color-dsc-red-soft)",
+          zIndex: 1,
+        }}
+      />
+      {/* Inner trace, second loop, 12px inside the outer — gives the
+          double-coil visual on the card */}
+      <div
+        aria-hidden
+        className="absolute pointer-events-none"
+        style={{
+          top: 36,
+          right: 36,
+          bottom: 36,
+          left: 36,
+          border: "1px solid var(--color-dsc-red-soft)",
+          zIndex: 1,
+        }}
+      />
+      {/* Chip mark — top-right corner, 28px square with UUID hash */}
+      <div
+        className="absolute pointer-events-none"
+        style={{ top: 12, right: 12, zIndex: 2 }}
+      >
+        <div
+          className="flex flex-col items-center justify-center"
+          style={{
+            width: 56,
+            height: 36,
+            border: "1px solid var(--color-dsc-red)",
+            background: "var(--color-bone)",
+          }}
+        >
+          <span className="font-mono text-[7px] uppercase tracking-[0.2em] text-[var(--color-dsc-red)] leading-none">
+            chip
+          </span>
+          <span className="font-mono text-[10px] text-[var(--color-dsc-red)] leading-none mt-0.5">
+            {idHash}
+          </span>
+        </div>
+      </div>
+    </>
+  );
+}
+
+function SpecLabel() {
+  const { contact } = useContact();
+  const idHash = shortHash(contact.id, 4);
+  const revHash = shortHash(contact.updated_at, 1);
+  const tier = contact.lifecycle.toUpperCase();
+  return (
+    <div className="mb-3 inline-block">
+      <span className="font-mono text-[9px] uppercase tracking-[0.22em] text-[var(--color-dsc-red)] border border-[var(--color-dsc-red)] px-2 py-0.5">
+        SPECIMEN · {tier}-{idHash} · REV.{revHash}
+      </span>
+    </div>
+  );
+}
+
+function MirroredFooter() {
+  const { contact } = useContact();
+  const updated = new Date(contact.updated_at)
+    .toISOString()
+    .slice(0, 10);
+  return (
+    <div
+      className="absolute right-12 pointer-events-none select-none"
+      style={{ bottom: 14, zIndex: 2 }}
+    >
+      <span
+        className="dsc-mirror font-mono text-[10px] uppercase tracking-[0.18em]"
+        style={{ color: "var(--color-dsc-red)", opacity: 0.6 }}
+      >
+        THIS IS A SPENDERS.CLUB CONTACT · UPDATED {updated} · KEEP IT SAFE
+      </span>
+    </div>
+  );
+}
+
+/* Registration crosshair — small + mark for corners of section blocks */
+function RegMark({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden
+      className={`absolute pointer-events-none ${className}`}
+      width="9"
+      height="9"
+      viewBox="0 0 9 9"
+      stroke="var(--color-dsc-red)"
+      strokeOpacity="0.4"
+      strokeWidth="1"
+    >
+      <line x1="4.5" y1="0" x2="4.5" y2="9" />
+      <line x1="0" y1="4.5" x2="9" y2="4.5" />
+    </svg>
   );
 }
 
@@ -172,28 +302,38 @@ function SaveIndicator() {
     return () => clearInterval(id);
   }, []);
 
-  let text = "All saved";
-  if (saveState === "saving") text = "Saving…";
-  else if (saveState === "error") text = "Save failed";
+  let text = "ready";
+  if (saveState === "saving") text = "saving…";
+  else if (saveState === "error") text = "save failed";
   else if (lastSavedAt) {
     const ago = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
     text =
       ago < 60
-        ? `Saved · ${ago}s ago`
-        : `Saved · ${Math.round(ago / 60)}m ago`;
+        ? `saved ${ago}s ago`
+        : `saved ${Math.round(ago / 60)}m ago`;
   }
 
+  // Dot pulses briefly each save commit by keying on lastSavedAt.
   return (
     <span
-      className={`text-[12px] tabular-nums ${
-        saveState === "error" ? "text-error" : "text-muted-fg"
-      }`}
+      className="font-mono text-[10px] lowercase tracking-[0.04em] inline-flex items-center gap-1.5 tabular-nums"
+      style={{ color: "var(--color-dsc-red)" }}
       title={
         lastSavedAt
           ? `Last saved ${new Date(lastSavedAt).toLocaleString()}`
           : ""
       }
     >
+      <span
+        key={lastSavedAt ?? "idle"}
+        className="dsc-pulse"
+        style={{
+          width: 6,
+          height: 6,
+          background: "var(--color-dsc-red)",
+          display: "inline-block",
+        }}
+      />
       {text}
     </span>
   );
@@ -218,19 +358,22 @@ function StickyHeader() {
       style={{
         backdropFilter: "saturate(180%) blur(8px)",
         WebkitBackdropFilter: "saturate(180%) blur(8px)",
-        background: "rgba(255,255,255,0.85)",
-        borderBottom: "1px solid #ECECEC",
+        background: "rgba(242,239,234,0.85)",
+        borderBottom: "1px solid var(--color-ink-soft)",
       }}
     >
-      <div className="mx-auto w-full max-w-[1180px] px-6 py-2.5 flex items-center justify-between gap-4">
+      <div className="mx-auto w-full max-w-[1180px] px-12 py-2.5 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <Link
             href="/admin"
-            className="text-[12px] text-muted-fg hover:text-dark shrink-0"
+            className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)] hover:text-[var(--color-dsc-red)] shrink-0"
           >
-            ← All
+            ← all
           </Link>
-          <span className="font-medium truncate">
+          <span
+            className="font-semibold truncate"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             {contact.display_name || contact.full_name}
           </span>
           <LifecyclePill compact />
@@ -250,23 +393,38 @@ function StickyHeader() {
 
 function LifecyclePill({ compact = false }: { compact?: boolean }) {
   const { contact, patch } = useContact();
-  const styles: Record<Lifecycle, string> = {
-    vip: "bg-dark text-white",
-    roster: "bg-primary-light text-primary border border-primary/20",
-    audience: "bg-offwhite text-muted-fg border border-border",
-    archived: "bg-muted/10 text-muted line-through",
+  const isStrong = contact.lifecycle === "vip" || contact.lifecycle === "roster";
+  const isArchived = contact.lifecycle === "archived";
+  const size = compact ? "text-[9px] px-1.5 py-0.5" : "text-[10px] px-2 py-1";
+
+  const style: React.CSSProperties = {
+    appearance: "none",
+    fontFamily: "var(--font-mono)",
+    letterSpacing: "0.18em",
+    borderRadius: 2,
+    cursor: "pointer",
+    border: "1px solid var(--color-dsc-red)",
+    background: isStrong ? "var(--color-dsc-red)" : "transparent",
+    color: isStrong ? "var(--color-bone)" : "var(--color-dsc-red)",
+    textDecoration: isArchived ? "line-through" : "none",
   };
-  const size = compact ? "text-[10px] px-2 py-0.5" : "text-[11px] px-2.5 py-1";
 
   return (
     <select
       value={contact.lifecycle}
       onChange={(e) => patch({ lifecycle: e.target.value as Lifecycle })}
-      className={`${styles[contact.lifecycle]} ${size} rounded-[var(--radius-pill)] font-mono uppercase tracking-[0.15em] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20`}
-      style={{ appearance: "none" }}
+      className={`${size} uppercase focus:outline-none`}
+      style={style}
     >
       {LIFECYCLES.map((lc) => (
-        <option key={lc} value={lc} className="bg-white text-dark normal-case">
+        <option
+          key={lc}
+          value={lc}
+          style={{
+            background: "var(--color-bone)",
+            color: "var(--color-ink)",
+          }}
+        >
           {LIFECYCLE_LABEL[lc]}
         </option>
       ))}
@@ -612,10 +770,13 @@ function Hero() {
   const { contact, patch } = useContact();
 
   return (
-    <header className="space-y-2.5">
+    <header className="space-y-2.5 pr-20">
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0 flex-1">
-          <h1 className="text-[32px] leading-tight font-semibold tracking-tight">
+          <h1
+            className="text-[36px] leading-[0.95] font-bold tracking-tight uppercase"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             <InlineEdit
               value={contact.display_name || contact.full_name}
               placeholder="Name"
@@ -705,22 +866,29 @@ function HeadsUpCallout() {
   const { contact, patch } = useContact();
   if (!contact.heads_up) return null;
   return (
-    <div className="mt-5 rounded-lg border border-warning/30 bg-[#FFFBEB] p-3 flex items-start gap-2.5">
-      <span className="text-warning text-[14px] leading-tight" aria-hidden>
-        ⚠
+    <div
+      className="mt-4 p-3 flex items-start gap-3"
+      style={{
+        border: "1px solid var(--color-dsc-red)",
+        background: "var(--color-dsc-red-mist)",
+      }}
+    >
+      <span
+        className="font-mono text-[10px] uppercase tracking-[0.2em] shrink-0"
+        style={{ color: "var(--color-dsc-red)" }}
+      >
+        // heads up
       </span>
-      <div className="flex-1 min-w-0">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-warning">
-          Heads up
-        </p>
-        <p className="text-[12px] text-dark whitespace-pre-line mt-1 leading-relaxed">
-          {contact.heads_up}
-        </p>
-      </div>
+      <p
+        className="flex-1 text-[12px] whitespace-pre-line leading-relaxed"
+        style={{ color: "var(--color-ink)" }}
+      >
+        {contact.heads_up}
+      </p>
       <button
         type="button"
         onClick={() => patch({ heads_up: null })}
-        className="text-[11px] text-muted-fg hover:text-dark shrink-0"
+        className="font-mono text-[11px] text-[var(--color-dsc-red)] hover:opacity-70 shrink-0"
         title="Dismiss"
       >
         ×
@@ -909,19 +1077,25 @@ function TierEditor() {
   const tiers = ["A", "B", "C"] as const;
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[12px] text-muted-fg">Roster tier</span>
-      <div className="inline-flex rounded-md border border-[#ECECEC] overflow-hidden">
+      <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-dsc-red)]">
+        roster tier
+      </span>
+      <div className="inline-flex">
         {tiers.map((t) => {
           const active = contact.roster_tier === t;
           return (
             <button
               key={t}
               onClick={() => patch({ roster_tier: active ? null : t })}
-              className={`px-4 py-1 text-[13px] font-medium transition ${
-                active
-                  ? "bg-dark text-white"
-                  : "bg-white text-muted-fg hover:text-dark"
-              } ${t !== "A" ? "border-l border-[#ECECEC]" : ""}`}
+              className="font-mono text-[14px] font-medium transition focus:outline-none"
+              style={{
+                width: 36,
+                height: 36,
+                border: "1px solid var(--color-dsc-red)",
+                marginLeft: t === "A" ? 0 : -1,
+                background: active ? "var(--color-dsc-red)" : "transparent",
+                color: active ? "var(--color-bone)" : "var(--color-dsc-red)",
+              }}
             >
               {t}
             </button>
@@ -959,16 +1133,18 @@ function FlagsEditor() {
             key={f.key}
             className="flex items-center gap-2 text-[13px] cursor-pointer select-none"
           >
-            <input
-              type="checkbox"
+            <DscCheckbox
               checked={checked}
-              onChange={(e) =>
-                patch({ [f.key]: e.target.checked } as Partial<Contact>)
+              onChange={(v) =>
+                patch({ [f.key]: v } as Partial<Contact>)
               }
-              className="size-4 accent-dark"
             />
             <span
-              className={f.danger && checked ? "text-error" : "text-dark"}
+              style={{
+                color: f.danger && checked
+                  ? "var(--color-dsc-red)"
+                  : "var(--color-ink)",
+              }}
             >
               {f.label}
             </span>
@@ -976,6 +1152,165 @@ function FlagsEditor() {
         );
       })}
     </div>
+  );
+}
+
+/* Ghost-red button — DSC's primary control treatment.
+   Transparent fill, 1px red border, mono uppercase label.
+   Hover flips fill to red, text to bone. No gradient, no shadow. */
+function DscButton({
+  children,
+  onClick,
+  type = "button",
+  size = "md",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  type?: "button" | "submit" | "reset";
+  size?: "sm" | "md";
+}) {
+  const sizing =
+    size === "sm" ? "text-[9px] px-2 py-1" : "text-[10px] px-3 py-1.5";
+  return (
+    <button
+      type={type}
+      onClick={onClick}
+      className={`font-mono uppercase tracking-[0.18em] transition cursor-pointer focus:outline-none ${sizing}`}
+      style={{
+        border: "1px solid var(--color-dsc-red)",
+        background: "transparent",
+        color: "var(--color-dsc-red)",
+        borderRadius: 2,
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = "var(--color-dsc-red)";
+        e.currentTarget.style.color = "var(--color-bone)";
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = "var(--color-dsc-red)";
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+/* Bottom-hairline-only text input. Idle has 1px ink/20%, focus turns red. */
+function DscField({
+  name,
+  placeholder,
+  defaultValue,
+  required,
+  autoFocus,
+  mono,
+  onBlur,
+  type = "text",
+}: {
+  name?: string;
+  placeholder?: string;
+  defaultValue?: string;
+  required?: boolean;
+  autoFocus?: boolean;
+  mono?: boolean;
+  type?: string;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <input
+      name={name}
+      type={type}
+      placeholder={placeholder}
+      defaultValue={defaultValue}
+      required={required}
+      autoFocus={autoFocus}
+      onBlur={onBlur}
+      className={`bg-transparent border-0 px-1 py-1 text-[13px] focus:outline-none placeholder:text-[var(--color-muted)] ${
+        mono ? "font-mono text-[12px]" : ""
+      }`}
+      style={{
+        borderBottom: "1px solid rgba(14,14,14,0.20)",
+        color: "var(--color-ink)",
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderBottom = "1px solid var(--color-dsc-red)";
+      }}
+      onBlurCapture={(e) => {
+        e.currentTarget.style.borderBottom = "1px solid rgba(14,14,14,0.20)";
+      }}
+    />
+  );
+}
+
+function DscSelect({
+  name,
+  defaultValue,
+  children,
+  onChange,
+}: {
+  name: string;
+  defaultValue?: string;
+  children: React.ReactNode;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}) {
+  return (
+    <select
+      name={name}
+      defaultValue={defaultValue}
+      onChange={onChange}
+      className="bg-transparent border-0 px-1 py-1 text-[13px] focus:outline-none cursor-pointer"
+      style={{
+        borderBottom: "1px solid rgba(14,14,14,0.20)",
+        color: "var(--color-ink)",
+        appearance: "none",
+      }}
+      onFocus={(e) => {
+        e.currentTarget.style.borderBottom = "1px solid var(--color-dsc-red)";
+      }}
+      onBlur={(e) => {
+        e.currentTarget.style.borderBottom = "1px solid rgba(14,14,14,0.20)";
+      }}
+    >
+      {children}
+    </select>
+  );
+}
+
+/* Square 14px checkbox with a red X when checked */
+function DscCheckbox({
+  checked,
+  onChange,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="inline-flex items-center justify-center"
+      style={{
+        width: 14,
+        height: 14,
+        border: "1px solid var(--color-ink)",
+        background: checked ? "var(--color-dsc-red)" : "transparent",
+      }}
+    >
+      {checked ? (
+        <svg
+          width="10"
+          height="10"
+          viewBox="0 0 10 10"
+          stroke="var(--color-bone)"
+          strokeWidth="1.5"
+        >
+          <line x1="1.5" y1="1.5" x2="8.5" y2="8.5" />
+          <line x1="8.5" y1="1.5" x2="1.5" y2="8.5" />
+        </svg>
+      ) : null}
+    </button>
   );
 }
 
@@ -1188,13 +1523,39 @@ function fmtDate(iso: string | null | undefined): string {
   });
 }
 
-const GIFT_STATUS_PILL: Record<GiftStatus, string> = {
-  queued: "bg-[#F5F5F4] text-muted-fg",
-  packed: "bg-[#DBEAFE] text-[#1E40AF]",
-  shipped: "bg-[#FEF3C7] text-[#92400E]",
-  delivered: "bg-[#DCFCE7] text-[#166534]",
-  posted: "bg-primary-light text-primary",
-  returned: "bg-[#FEE2E2] text-error",
+/* DSC stamp pills — single accent (oxblood). Active states use red fill,
+   bone text. Inactive/in-progress states use red border, varying tints. */
+const GIFT_STATUS_STAMP: Record<GiftStatus, React.CSSProperties> = {
+  queued: {
+    border: "1px solid var(--color-muted)",
+    background: "transparent",
+    color: "var(--color-muted-deep)",
+  },
+  packed: {
+    border: "1px solid var(--color-dsc-red)",
+    background: "transparent",
+    color: "var(--color-dsc-red)",
+  },
+  shipped: {
+    border: "1px solid var(--color-dsc-red)",
+    background: "var(--color-dsc-red-mist)",
+    color: "var(--color-dsc-red)",
+  },
+  delivered: {
+    border: "1px solid var(--color-dsc-red)",
+    background: "var(--color-dsc-red)",
+    color: "var(--color-bone)",
+  },
+  posted: {
+    border: "1px solid var(--color-dsc-red)",
+    background: "var(--color-dsc-red)",
+    color: "var(--color-bone)",
+  },
+  returned: {
+    border: "1px dashed var(--color-dsc-red)",
+    background: "transparent",
+    color: "var(--color-dsc-red)",
+  },
 };
 
 function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
@@ -1202,18 +1563,22 @@ function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
   const [adding, setAdding] = useState(false);
 
   return (
-    <section className="mt-8">
+    <section className="relative mt-8">
+      <RegMark className="-top-1 -left-1" />
+      <RegMark className="-top-1 -right-1" />
       <div className="flex items-end justify-between mb-3">
         <div className="flex items-baseline gap-2">
-          <h2 className="text-[18px] font-semibold tracking-tight">Gifts</h2>
-          <span className="text-[12px] text-muted-fg">{gifts.length}</span>
+          <h2
+            className="text-[18px] font-bold uppercase tracking-tight"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            Gifts
+          </h2>
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-dsc-red)]">
+            [{gifts.length}]
+          </span>
         </div>
-        <button
-          onClick={() => setAdding(true)}
-          className="text-[12px] font-medium px-3 py-1.5 rounded-full bg-dark text-white hover:bg-dark/85 transition"
-        >
-          + Log gift
-        </button>
+        <DscButton onClick={() => setAdding(true)}>+ log gift</DscButton>
       </div>
 
       {adding ? (
@@ -1222,53 +1587,30 @@ function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
             await addGift(fd);
             setAdding(false);
           }}
-          className="border border-[#ECECEC] rounded-lg p-3 mb-3 grid grid-cols-[1.5fr_1fr_120px_140px_120px_auto] gap-2 text-[13px]"
+          className="p-3 mb-3 grid grid-cols-[1.5fr_1fr_120px_140px_120px_auto] gap-3 text-[13px]"
+          style={{
+            border: "1px solid var(--color-dsc-red)",
+            background: "var(--color-dsc-red-mist)",
+          }}
         >
           <input type="hidden" name="contact_id" value={contact.id} />
-          <input
-            name="item"
-            required
-            autoFocus
-            placeholder="Item"
-            className="px-2 py-1.5 border border-[#ECECEC] rounded focus:outline-none focus:border-[#E11D48]"
-          />
-          <input
-            name="drop_name"
-            placeholder="Drop"
-            className="px-2 py-1.5 border border-[#ECECEC] rounded focus:outline-none focus:border-[#E11D48]"
-          />
-          <select
-            name="status"
-            defaultValue="queued"
-            className="px-2 py-1.5 border border-[#ECECEC] rounded focus:outline-none focus:border-[#E11D48]"
-          >
+          <DscField name="item" placeholder="item" required autoFocus />
+          <DscField name="drop_name" placeholder="drop" />
+          <DscSelect name="status" defaultValue="queued">
             {GIFT_STATUSES.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
             ))}
-          </select>
-          <input
-            name="tracking"
-            placeholder="Tracking #"
-            className="px-2 py-1.5 border border-[#ECECEC] rounded focus:outline-none focus:border-[#E11D48] font-mono text-[12px]"
-          />
-          <input
-            name="logged_by"
-            placeholder="Logged by"
-            className="px-2 py-1.5 border border-[#ECECEC] rounded focus:outline-none focus:border-[#E11D48]"
-          />
+          </DscSelect>
+          <DscField name="tracking" placeholder="tracking" mono />
+          <DscField name="logged_by" placeholder="logged by" />
           <div className="flex items-center gap-2">
-            <button
-              type="submit"
-              className="text-[12px] font-medium px-3 py-1.5 rounded-full bg-dark text-white hover:bg-dark/85 transition"
-            >
-              Save
-            </button>
+            <DscButton type="submit">save</DscButton>
             <button
               type="button"
               onClick={() => setAdding(false)}
-              className="text-[12px] text-muted-fg hover:text-dark"
+              className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-muted)] hover:text-[var(--color-dsc-red)]"
             >
               cancel
             </button>
@@ -1282,43 +1624,56 @@ function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
           onAdd={() => setAdding(true)}
         />
       ) : (
-        <div className="border border-[#ECECEC] rounded-lg overflow-hidden">
+        <div className="relative">
           <table className="w-full text-[13px]">
-            <thead className="bg-[#FAFAFA] border-b border-[#ECECEC]">
-              <tr className="text-left text-[10px] uppercase tracking-[0.15em] text-muted-fg">
-                <th className="px-3 py-2 font-normal w-[80px]">Date</th>
-                <th className="px-3 py-2 font-normal">Item</th>
-                <th className="px-3 py-2 font-normal">Drop</th>
-                <th className="px-3 py-2 font-normal w-[110px]">Status</th>
-                <th className="px-3 py-2 font-normal">Tracking</th>
-                <th className="px-3 py-2 font-normal">By</th>
+            <thead>
+              <tr
+                className="text-left font-mono text-[10px] uppercase tracking-[0.18em]"
+                style={{
+                  color: "var(--color-dsc-red)",
+                  borderBottom: "1px solid var(--color-dsc-red)",
+                }}
+              >
+                <th className="px-3 py-2 font-normal w-[80px]">date</th>
+                <th className="px-3 py-2 font-normal">item</th>
+                <th className="px-3 py-2 font-normal">drop</th>
+                <th className="px-3 py-2 font-normal w-[110px]">status</th>
+                <th className="px-3 py-2 font-normal">tracking</th>
+                <th className="px-3 py-2 font-normal">by</th>
                 <th className="px-3 py-2 font-normal w-[40px]" />
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#ECECEC]">
+            <tbody>
+              <tr aria-hidden style={{ height: 0 }}>
+                <td colSpan={7} style={{ padding: 0 }} />
+              </tr>
               {gifts.map((g) => (
-                <tr key={g.id} className="group">
-                  <td className="px-3 py-2.5 font-mono text-[12px] text-muted-fg align-top">
+                <tr
+                  key={g.id}
+                  className="group hover:bg-[var(--color-bone-deep)] transition"
+                  style={{ borderBottom: "1px solid rgba(14,14,14,0.08)" }}
+                >
+                  <td className="px-3 py-2.5 font-mono text-[12px] text-[var(--color-muted)] align-top">
                     {fmtDate(g.sent_at ?? g.created_at)}
                   </td>
                   <td className="px-3 py-2.5 align-top">
                     <div className="font-medium">{g.item}</div>
                     {g.notes ? (
-                      <div className="text-[11px] text-muted-fg italic">
+                      <div className="text-[11px] text-[var(--color-muted)] italic">
                         {g.notes}
                       </div>
                     ) : null}
                   </td>
-                  <td className="px-3 py-2.5 align-top text-muted-fg">
+                  <td className="px-3 py-2.5 align-top text-[var(--color-muted)]">
                     {g.drop_name ?? "—"}
                   </td>
                   <td className="px-3 py-2.5 align-top">
                     <GiftStatusPill gift={g} />
                   </td>
-                  <td className="px-3 py-2.5 align-top font-mono text-[11px] text-muted-fg">
+                  <td className="px-3 py-2.5 align-top font-mono text-[11px] text-[var(--color-muted)]">
                     {g.tracking ?? "—"}
                   </td>
-                  <td className="px-3 py-2.5 align-top text-[11px] text-muted">
+                  <td className="px-3 py-2.5 align-top text-[11px] text-[var(--color-muted)]">
                     {g.logged_by ?? "—"}
                   </td>
                   <td className="px-3 py-2.5 align-top text-right">
@@ -1357,11 +1712,22 @@ function GiftStatusPill({ gift }: { gift: ContactGift }) {
         name="status"
         defaultValue={gift.status}
         onChange={(e) => e.currentTarget.form?.requestSubmit()}
-        className={`px-2 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-[0.1em] cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E11D48]/20 ${GIFT_STATUS_PILL[gift.status]}`}
-        style={{ appearance: "none" }}
+        className="px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.15em] cursor-pointer focus:outline-none"
+        style={{
+          appearance: "none",
+          borderRadius: 2,
+          ...GIFT_STATUS_STAMP[gift.status],
+        }}
       >
         {GIFT_STATUSES.map((s) => (
-          <option key={s} value={s} className="bg-white text-dark">
+          <option
+            key={s}
+            value={s}
+            style={{
+              background: "var(--color-bone)",
+              color: "var(--color-ink)",
+            }}
+          >
             {s}
           </option>
         ))}
@@ -1379,19 +1745,37 @@ function EmptyGifts({
 }) {
   return (
     <div
-      className="border border-dashed border-[#ECECEC] rounded-lg flex flex-col items-center justify-center text-center px-6"
-      style={{ minHeight: 260 }}
+      className="relative flex flex-col items-start justify-end px-5 py-4"
+      style={{
+        minHeight: 260,
+        border: "1px dashed var(--color-dsc-red-soft)",
+      }}
     >
-      <p className="text-[14px] text-dark">Nothing sent to {name} yet.</p>
-      <p className="text-[12px] text-muted-fg mt-1 max-w-md">
-        Track every drop, status change, and unboxing here. Add the first
-        one to start the ledger.
+      <RegMark className="top-1 left-1" />
+      <RegMark className="top-1 right-1" />
+      <RegMark className="bottom-1 left-1" />
+      <RegMark className="bottom-1 right-1" />
+      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--color-dsc-red)]">
+        // no gifts logged. nothing shipped to {name.toLowerCase()} yet.
       </p>
       <button
         onClick={onAdd}
-        className="mt-4 text-[13px] font-medium px-4 py-2 rounded-full bg-dark text-white hover:bg-dark/85 transition"
+        className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-1.5 transition"
+        style={{
+          border: "1px solid var(--color-dsc-red)",
+          background: "transparent",
+          color: "var(--color-dsc-red)",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = "var(--color-dsc-red)";
+          e.currentTarget.style.color = "var(--color-bone)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "transparent";
+          e.currentTarget.style.color = "var(--color-dsc-red)";
+        }}
       >
-        + Log first gift
+        // log first gift
       </button>
     </div>
   );
@@ -1407,9 +1791,19 @@ function ContextFeed({ notes }: { notes: ContactNote[] }) {
 
   return (
     <section>
-      <div className="flex items-baseline justify-between mb-3">
-        <h2 className="text-[14px] font-semibold tracking-tight">Context</h2>
-        <span className="text-[11px] text-muted-fg">{notes.length}</span>
+      <div
+        className="flex items-baseline justify-between mb-3 pb-1"
+        style={{ borderBottom: "1px solid var(--color-dsc-red)" }}
+      >
+        <h2
+          className="font-mono text-[10px] uppercase tracking-[0.2em]"
+          style={{ color: "var(--color-dsc-red)" }}
+        >
+          context
+        </h2>
+        <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
+          [{notes.length}]
+        </span>
       </div>
 
       {adding ? (
@@ -1463,7 +1857,7 @@ function ContextFeed({ notes }: { notes: ContactNote[] }) {
 
       {notes.length === 0 ? (
         <p className="text-[12px] text-muted py-4">
-          No context yet. Paste a DM or add a note to start.
+          // no context. paste a DM or log a note to start.
         </p>
       ) : (
         <ul className="space-y-3">
@@ -1533,9 +1927,19 @@ function OutreachFeed({
 
   return (
     <section>
-      <div className="flex items-baseline justify-between mb-3">
-        <h2 className="text-[14px] font-semibold tracking-tight">Outreach</h2>
-        <span className="text-[11px] text-muted-fg">{touchpoints.length}</span>
+      <div
+        className="flex items-baseline justify-between mb-3 pb-1"
+        style={{ borderBottom: "1px solid var(--color-dsc-red)" }}
+      >
+        <h2
+          className="font-mono text-[10px] uppercase tracking-[0.2em]"
+          style={{ color: "var(--color-dsc-red)" }}
+        >
+          outreach
+        </h2>
+        <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
+          [{touchpoints.length}]
+        </span>
       </div>
 
       {adding ? (
@@ -1614,7 +2018,7 @@ function OutreachFeed({
 
       {touchpoints.length === 0 ? (
         <p className="text-[12px] text-muted py-4">
-          No outreach logged yet. Log a DM, reply, or call.
+          // no outreach logged. log a DM, reply, or call.
         </p>
       ) : (
         <ul className="space-y-3">
@@ -1709,19 +2113,27 @@ function ActivityAccordion({
   ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 
   return (
-    <section className="mt-12 pt-6 border-t border-[#ECECEC]">
+    <section
+      className="mt-12 pt-4"
+      style={{ borderTop: "1px solid rgba(14,14,14,0.12)" }}
+    >
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center justify-between w-full text-left"
+        className="flex items-center justify-between w-full text-left group"
       >
         <div className="flex items-baseline gap-2">
-          <span className="text-[11px] uppercase tracking-[0.18em] text-muted-fg">
-            Activity
+          <span
+            className="font-mono text-[10px] uppercase tracking-[0.2em]"
+            style={{ color: "var(--color-dsc-red)" }}
+          >
+            activity
           </span>
-          <span className="text-[11px] text-muted">{events.length}</span>
+          <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
+            [{events.length}]
+          </span>
         </div>
         <span
-          className={`text-[12px] text-muted-fg transition-transform ${open ? "rotate-90" : ""}`}
+          className={`font-mono text-[12px] text-[var(--color-dsc-red)] transition-transform ${open ? "rotate-90" : ""}`}
         >
           ›
         </span>
