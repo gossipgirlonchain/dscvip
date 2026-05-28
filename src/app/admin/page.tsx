@@ -159,23 +159,26 @@ export default async function AdminPage({
   const sevenDaysAgoIso = new Date(now - SEVEN_DAYS).toISOString();
 
   // ─── Pipeline gifts ──────────────────────────────────────────────────
-  // In-flight + recently posted. POSTED column shows last 7d of wins.
-  const pipelineGiftsQuery = supabase
+  // Split into two queries because PostgREST's .or() with nested and(...)
+  // doesn't play well with colons in the ISO timestamp.
+  const inFlightQuery = supabase
     .from("contact_gifts")
     .select(
       "*, contacts(id, full_name, display_name, address_line1, lifecycle), products(name, image_url, drops(name))"
     )
-    .or(
-      [
-        "status.eq.queued",
-        "status.eq.packed",
-        "status.eq.shipped",
-        "status.eq.delivered",
-        "and(status.eq.posted,posted_at.gte." + sevenDaysAgoIso + ")",
-      ].join(",")
-    )
+    .in("status", ["queued", "packed", "shipped", "delivered"])
     .order("created_at", { ascending: true })
     .limit(500);
+
+  const postedRecentQuery = supabase
+    .from("contact_gifts")
+    .select(
+      "*, contacts(id, full_name, display_name, address_line1, lifecycle), products(name, image_url, drops(name))"
+    )
+    .eq("status", "posted")
+    .gte("posted_at", sevenDaysAgoIso)
+    .order("posted_at", { ascending: false })
+    .limit(200);
 
   // ─── Counts ──────────────────────────────────────────────────────────
   const stageCountsQuery = supabase
@@ -227,7 +230,8 @@ export default async function AdminPage({
   const allMetaQuery = supabase.from("contacts").select("owner, tags");
 
   const [
-    pipelineGiftsRes,
+    inFlightRes,
+    postedRecentRes,
     stageCountsRes,
     contactsRes,
     giftTouchesRes,
@@ -236,7 +240,8 @@ export default async function AdminPage({
     tokensRes,
     metaRes,
   ] = await Promise.all([
-    pipelineGiftsQuery,
+    inFlightQuery,
+    postedRecentQuery,
     stageCountsQuery,
     contactsQuery,
     giftTouchesQuery,
@@ -261,9 +266,10 @@ export default async function AdminPage({
     } | null;
   };
 
-  const pipelineGifts: PipelineGift[] = (
-    (pipelineGiftsRes.data ?? []) as RawPipelineRow[]
-  ).map((g) => ({
+  const pipelineGifts: PipelineGift[] = [
+    ...((inFlightRes.data ?? []) as RawPipelineRow[]),
+    ...((postedRecentRes.data ?? []) as RawPipelineRow[]),
+  ].map((g) => ({
     ...g,
     contact_name:
       g.contacts?.display_name ?? g.contacts?.full_name ?? "—",
