@@ -4,8 +4,9 @@
   /* ─── DSC palette ───────────────────────────────────────────────────
      Bone, ink, warm gray, oxblood red. No second accent.
      ───────────────────────────────────────────────────────────────── */
-  --color-bone: #F2EFEA;            /* page background, warm bone */
-  --color-bone-deep: #EAE6E0;       /* subtle plate, frosted */
+  --color-bone: #FAF7F2;            /* page background, warm bone (v3) */
+  --color-bone-deep: #F2EFEA;       /* hover tint */
+  --color-bone-surface: #FFFFFF;    /* container fills (v3 — gentle separation) */
   --color-ink: #0E0E0E;             /* near-black, never pure */
   --color-ink-soft: rgba(14, 14, 14, 0.12);  /* structural hairlines */
   --color-muted: #7A736B;           /* warm gray, never blue-gray */
@@ -39,14 +40,16 @@
   --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, monospace;
   --font-display: var(--font-display), "IBM Plex Sans Condensed", ui-sans-serif, system-ui, sans-serif;
 
-  /* Geometry: nothing rounded. 2px max. */
-  --radius-button: 2px;
-  --radius-card: 2px;
-  --radius-input: 0px;
-  --radius-modal: 2px;
-  --radius-pill: 2px;
-  --radius-nav: 2px;
-  --radius-tooltip: 2px;
+  /* Geometry (v3): soft-edged containers, sharp controls.
+     Checkboxes and tier squares stay at 2px inline — they should still
+     read as punched cards. */
+  --radius-button: 6px;
+  --radius-card: 8px;
+  --radius-input: 6px;
+  --radius-modal: 8px;
+  --radius-pill: 6px;
+  --radius-nav: 6px;
+  --radius-tooltip: 4px;
 
   /* No shadows anywhere. These vars exist for back-compat but are
      intentionally nulled out so accidental usages no-op. */

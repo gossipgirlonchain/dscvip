@@ -178,13 +178,13 @@ export default async function AdminPage({
     border: "1px solid var(--color-dsc-red)",
     background: "var(--color-dsc-red)",
     color: "var(--color-bone)",
-    borderRadius: 2,
+    borderRadius: 6,
   };
   const chipIdleStyle: React.CSSProperties = {
     border: "1px solid var(--color-dsc-red)",
     background: "transparent",
     color: "var(--color-dsc-red)",
-    borderRadius: 2,
+    borderRadius: 6,
   };
   const inputStyle: React.CSSProperties = {
     borderBottom: "1px solid rgba(14,14,14,0.2)",
@@ -293,7 +293,7 @@ export default async function AdminPage({
             border: "1px solid var(--color-dsc-red)",
             background: "transparent",
             color: "var(--color-dsc-red)",
-            borderRadius: 2,
+            borderRadius: 6,
           }}
         >
           filter
@@ -368,7 +368,7 @@ export default async function AdminPage({
                   <td className="py-2.5 pr-3 align-top">
                     <span
                       className="inline-block px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.18em]"
-                      style={{ ...LIFECYCLE_PILL[c.lifecycle], borderRadius: 2 }}
+                      style={{ ...LIFECYCLE_PILL[c.lifecycle], borderRadius: 6 }}
                     >
                       {LIFECYCLE_LABEL[c.lifecycle].toLowerCase()}
                     </span>
@@ -457,7 +457,7 @@ export default async function AdminPage({
               border: "1px solid var(--color-dsc-red)",
               background: "transparent",
               color: "var(--color-dsc-red)",
-              borderRadius: 2,
+              borderRadius: 6,
             }}
           >
             mint

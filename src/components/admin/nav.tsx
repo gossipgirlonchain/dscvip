@@ -57,7 +57,7 @@ function NavLink({
         border: "1px solid var(--color-dsc-red)",
         background: active ? "var(--color-dsc-red)" : "transparent",
         color: active ? "var(--color-bone)" : "var(--color-dsc-red)",
-        borderRadius: 2,
+        borderRadius: 6,
       }}
     >
       {children}

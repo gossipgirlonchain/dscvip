@@ -237,7 +237,7 @@ export function LogGiftPicker({
                     color: active
                       ? "var(--color-bone)"
                       : "var(--color-dsc-red)",
-                    borderRadius: 2,
+                    borderRadius: 6,
                     textDecoration: outOfStock ? "line-through" : "none",
                   }}
                   title={
@@ -361,7 +361,7 @@ export function LogGiftPicker({
             border: "1px solid var(--color-dsc-red)",
             background: "var(--color-dsc-red)",
             color: "var(--color-bone)",
-            borderRadius: 2,
+            borderRadius: 6,
           }}
         >
           {pending ? "logging…" : "log gift"}

@@ -76,7 +76,7 @@ export default async function AdminLogin({
             border: "1px solid var(--color-dsc-red)",
             background: "transparent",
             color: "var(--color-dsc-red)",
-            borderRadius: 2,
+            borderRadius: 6,
           }}
         >
           enter

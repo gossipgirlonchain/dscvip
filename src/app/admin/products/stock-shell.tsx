@@ -65,7 +65,7 @@ export function StockShell({
             border: "1px solid var(--color-dsc-red)",
             background: "var(--color-dsc-red)",
             color: "var(--color-bone)",
-            borderRadius: 2,
+            borderRadius: 6,
           }}
         >
           + ingest product
@@ -185,7 +185,7 @@ function FilterBar({
           border: "1px solid var(--color-dsc-red)",
           background: "transparent",
           color: "var(--color-dsc-red)",
-          borderRadius: 2,
+          borderRadius: 6,
         }}
       >
         filter
@@ -327,7 +327,7 @@ function ProductTable({
                     background:
                       p.status === "active" ? "transparent" : "transparent",
                     color: "var(--color-dsc-red)",
-                    borderRadius: 2,
+                    borderRadius: 6,
                     textDecoration:
                       p.status === "archived" ? "line-through" : "none",
                   }}
@@ -606,7 +606,7 @@ function IngestModal({
               border: "1px solid var(--color-dsc-red)",
               background: "var(--color-dsc-red)",
               color: "var(--color-bone)",
-              borderRadius: 2,
+              borderRadius: 6,
             }}
           >
             {pending ? "ingesting…" : "ingest"}
@@ -635,7 +635,7 @@ function SizeChip({
         border: "1px solid var(--color-dsc-red)",
         background: active ? "var(--color-dsc-red)" : "transparent",
         color: active ? "var(--color-bone)" : "var(--color-dsc-red)",
-        borderRadius: 2,
+        borderRadius: 6,
       }}
     >
       {size}
@@ -834,7 +834,7 @@ function ProductDetailDrawer({
               border: "1px solid var(--color-dsc-red)",
               background: editing ? "var(--color-dsc-red)" : "transparent",
               color: editing ? "var(--color-bone)" : "var(--color-dsc-red)",
-              borderRadius: 2,
+              borderRadius: 6,
             }}
           >
             {editing ? "close edit" : "edit"}
@@ -848,7 +848,7 @@ function ProductDetailDrawer({
                 style={{
                   border: "1px dashed var(--color-dsc-red)",
                   color: "var(--color-dsc-red)",
-                  borderRadius: 2,
+                  borderRadius: 6,
                 }}
               >
                 archive
@@ -863,7 +863,7 @@ function ProductDetailDrawer({
                 style={{
                   border: "1px solid var(--color-dsc-red)",
                   color: "var(--color-dsc-red)",
-                  borderRadius: 2,
+                  borderRadius: 6,
                 }}
               >
                 unarchive
@@ -1006,7 +1006,7 @@ function EditProductInline({
             border: "1px solid var(--color-dsc-red)",
             background: "var(--color-dsc-red)",
             color: "var(--color-bone)",
-            borderRadius: 2,
+            borderRadius: 6,
           }}
         >
           {pending ? "saving…" : "save"}

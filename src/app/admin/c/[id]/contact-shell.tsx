@@ -179,12 +179,11 @@ function shortHash(s: string, len = 6): string {
 }
 
 function PageChrome() {
-  const { contact } = useContact();
-  const idHash = shortHash(contact.id, 6);
-
+  // v3: only the coil earns its space. Chip mark and registration
+  // crosshairs were litter — the spec label on the left carries the
+  // serial-number energy on its own.
   return (
     <>
-      {/* Perimeter coil trace — 1px oxblood hairline inset 24px */}
       <div
         aria-hidden
         className="absolute pointer-events-none"
@@ -194,11 +193,10 @@ function PageChrome() {
           bottom: 24,
           left: 24,
           border: "1px solid var(--color-dsc-red-soft)",
+          borderRadius: 8,
           zIndex: 1,
         }}
       />
-      {/* Inner trace, second loop, 12px inside the outer — gives the
-          double-coil visual on the card */}
       <div
         aria-hidden
         className="absolute pointer-events-none"
@@ -208,31 +206,10 @@ function PageChrome() {
           bottom: 36,
           left: 36,
           border: "1px solid var(--color-dsc-red-soft)",
+          borderRadius: 6,
           zIndex: 1,
         }}
       />
-      {/* Chip mark — top-right corner, 28px square with UUID hash */}
-      <div
-        className="absolute pointer-events-none"
-        style={{ top: 12, right: 12, zIndex: 2 }}
-      >
-        <div
-          className="flex flex-col items-center justify-center"
-          style={{
-            width: 56,
-            height: 36,
-            border: "1px solid var(--color-dsc-red)",
-            background: "var(--color-bone)",
-          }}
-        >
-          <span className="font-mono text-[7px] uppercase tracking-[0.2em] text-[var(--color-dsc-red)] leading-none">
-            chip
-          </span>
-          <span className="font-mono text-[10px] text-[var(--color-dsc-red)] leading-none mt-0.5">
-            {idHash}
-          </span>
-        </div>
-      </div>
     </>
   );
 }
@@ -271,24 +248,7 @@ function MirroredFooter() {
   );
 }
 
-/* Registration crosshair — small + mark for corners of section blocks */
-function RegMark({ className = "" }: { className?: string }) {
-  return (
-    <svg
-      aria-hidden
-      className={`absolute pointer-events-none ${className}`}
-      width="9"
-      height="9"
-      viewBox="0 0 9 9"
-      stroke="var(--color-dsc-red)"
-      strokeOpacity="0.4"
-      strokeWidth="1"
-    >
-      <line x1="4.5" y1="0" x2="4.5" y2="9" />
-      <line x1="0" y1="4.5" x2="9" y2="4.5" />
-    </svg>
-  );
-}
+/* (RegMark removed in v3 — registration crosshairs read as litter, not detail.) */
 
 /* ─────────────────────────────────────────────────────────────────────
    Save indicator + sticky header
@@ -303,14 +263,14 @@ function SaveIndicator() {
   }, []);
 
   let text = "ready";
-  if (saveState === "saving") text = "saving…";
-  else if (saveState === "error") text = "save failed";
+  if (saveState === "saving") text = "committing…";
+  else if (saveState === "error") text = "commit failed";
   else if (lastSavedAt) {
     const ago = Math.max(1, Math.round((Date.now() - lastSavedAt) / 1000));
     text =
       ago < 60
-        ? `saved ${ago}s ago`
-        : `saved ${Math.round(ago / 60)}m ago`;
+        ? `committed ${ago}s ago`
+        : `committed ${Math.round(ago / 60)}m ago`;
   }
 
   // Dot pulses briefly each save commit by keying on lastSavedAt.
@@ -401,7 +361,7 @@ function LifecyclePill({ compact = false }: { compact?: boolean }) {
     appearance: "none",
     fontFamily: "var(--font-mono)",
     letterSpacing: "0.18em",
-    borderRadius: 2,
+    borderRadius: 6,
     cursor: "pointer",
     border: "1px solid var(--color-dsc-red)",
     background: isStrong ? "var(--color-dsc-red)" : "transparent",
@@ -757,7 +717,7 @@ function HeroKebab() {
                 }
               }}
             >
-              Delete contact
+              PURGE RECORD
             </button>
           </form>
         </div>
@@ -925,7 +885,14 @@ function SnapshotStrip() {
 
   return (
     <section className="mt-5">
-      <div className="grid grid-cols-2 md:grid-cols-5 border border-[#ECECEC] rounded-lg overflow-hidden bg-white">
+      <div
+        className="grid grid-cols-2 md:grid-cols-5 overflow-hidden"
+        style={{
+          border: "1px solid rgba(14,14,14,0.12)",
+          background: "var(--color-bone-surface)",
+          borderRadius: 8,
+        }}
+      >
         <Tile
           active={open === "tier"}
           onClick={() => toggle("tier")}
@@ -1095,6 +1062,7 @@ function TierEditor() {
                 marginLeft: t === "A" ? 0 : -1,
                 background: active ? "var(--color-dsc-red)" : "transparent",
                 color: active ? "var(--color-bone)" : "var(--color-dsc-red)",
+                borderRadius: 2, // punched-card squares stay sharp
               }}
             >
               {t}
@@ -1180,7 +1148,7 @@ function DscButton({
         border: "1px solid var(--color-dsc-red)",
         background: "transparent",
         color: "var(--color-dsc-red)",
-        borderRadius: 2,
+        borderRadius: 6,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = "var(--color-dsc-red)";
@@ -1296,6 +1264,7 @@ function DscCheckbox({
         height: 14,
         border: "1px solid var(--color-ink)",
         background: checked ? "var(--color-dsc-red)" : "transparent",
+        borderRadius: 2, // punched-card sharpness
       }}
     >
       {checked ? (
@@ -1564,15 +1533,13 @@ function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
 
   return (
     <section className="relative mt-8">
-      <RegMark className="-top-1 -left-1" />
-      <RegMark className="-top-1 -right-1" />
       <div className="flex items-end justify-between mb-3">
         <div className="flex items-baseline gap-2">
           <h2
             className="text-[18px] font-bold uppercase tracking-tight"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Gifts
+            LEDGER
           </h2>
           <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[var(--color-dsc-red)]">
             [{gifts.length}]
@@ -1601,7 +1568,14 @@ function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
           onAdd={() => setAdding(true)}
         />
       ) : (
-        <div className="relative">
+        <div
+          className="relative overflow-hidden"
+          style={{
+            background: "var(--color-bone-surface)",
+            border: "1px solid rgba(14,14,14,0.12)",
+            borderRadius: 8,
+          }}
+        >
           <table className="w-full text-[13px]">
             <thead>
               <tr
@@ -1692,7 +1666,7 @@ function GiftStatusPill({ gift }: { gift: ContactGift }) {
         className="px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.15em] cursor-pointer focus:outline-none"
         style={{
           appearance: "none",
-          borderRadius: 2,
+          borderRadius: 6,
           ...GIFT_STATUS_STAMP[gift.status],
         }}
       >
@@ -1720,28 +1694,21 @@ function EmptyGifts({
   name: string;
   onAdd: () => void;
 }) {
+  // v3: slim. One line + button, left-aligned. No dashed container,
+  // no reserved real estate — the empty state was eating the page.
   return (
-    <div
-      className="relative flex flex-col items-start justify-end px-5 py-4"
-      style={{
-        minHeight: 260,
-        border: "1px dashed var(--color-dsc-red-soft)",
-      }}
-    >
-      <RegMark className="top-1 left-1" />
-      <RegMark className="top-1 right-1" />
-      <RegMark className="bottom-1 left-1" />
-      <RegMark className="bottom-1 right-1" />
-      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--color-dsc-red)]">
+    <div className="py-3 space-y-3">
+      <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-[var(--color-muted-deep)]">
         // no gifts logged. nothing shipped to {name.toLowerCase()} yet.
       </p>
       <button
         onClick={onAdd}
-        className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-1.5 transition"
+        className="font-mono text-[10px] uppercase tracking-[0.18em] px-3 py-1.5 transition"
         style={{
           border: "1px solid var(--color-dsc-red)",
           background: "transparent",
           color: "var(--color-dsc-red)",
+          borderRadius: 6,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.background = "var(--color-dsc-red)";
@@ -1752,7 +1719,7 @@ function EmptyGifts({
           e.currentTarget.style.color = "var(--color-dsc-red)";
         }}
       >
-        // log first gift
+        log first gift
       </button>
     </div>
   );
@@ -1776,7 +1743,7 @@ function ContextFeed({ notes }: { notes: ContactNote[] }) {
           className="font-mono text-[10px] uppercase tracking-[0.2em]"
           style={{ color: "var(--color-dsc-red)" }}
         >
-          context
+          dossier
         </h2>
         <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
           [{notes.length}]
@@ -1912,7 +1879,7 @@ function OutreachFeed({
           className="font-mono text-[10px] uppercase tracking-[0.2em]"
           style={{ color: "var(--color-dsc-red)" }}
         >
-          outreach
+          transmissions
         </h2>
         <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
           [{touchpoints.length}]
@@ -2103,7 +2070,7 @@ function ActivityAccordion({
             className="font-mono text-[10px] uppercase tracking-[0.2em]"
             style={{ color: "var(--color-dsc-red)" }}
           >
-            activity
+            log
           </span>
           <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
             [{events.length}]
