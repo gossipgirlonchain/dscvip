@@ -1165,9 +1165,16 @@ function AttentionPanel({
   items: AttentionItem[];
 }) {
   return (
-    <div className="space-y-2">
+    <div
+      className="flex flex-col"
+      style={{
+        background: "var(--color-bone-surface)",
+        border: "1px solid rgba(14,14,14,0.12)",
+        borderRadius: 8,
+      }}
+    >
       <div
-        className="flex items-baseline justify-between pb-1"
+        className="flex items-baseline justify-between px-4 py-2.5"
         style={{ borderBottom: "1px solid var(--color-dsc-red)" }}
       >
         <h3
@@ -1182,35 +1189,35 @@ function AttentionPanel({
       </div>
       {items.length === 0 ? (
         <p
-          className="py-3 font-mono text-[11px] uppercase tracking-[0.18em]"
+          className="px-4 py-4 font-mono text-[11px] uppercase tracking-[0.18em]"
           style={{ color: "var(--color-muted-deep)" }}
         >
           {empty}
         </p>
       ) : (
-        <ul className="space-y-1.5">
-          {items.map((it) => {
+        <ul>
+          {items.map((it, idx) => {
             const edgeStyle: React.CSSProperties =
               it.edge === "stuck"
                 ? { borderLeft: "2px solid var(--color-dsc-red)" }
                 : it.edge === "aging"
                   ? { borderLeft: "2px solid var(--color-dsc-red-soft)" }
-                  : {};
+                  : { borderLeft: "2px solid transparent" };
             return (
               <li
                 key={it.id}
-                className="px-2.5 py-2 text-[12px]"
+                className="px-4 py-2.5 text-[12px] hover:bg-[var(--color-bone-deep)] transition"
                 style={{
-                  background: "var(--color-bone-surface)",
-                  border: "1px solid rgba(14,14,14,0.08)",
-                  borderRadius: 6,
+                  borderTop:
+                    idx === 0 ? "none" : "1px solid rgba(14,14,14,0.08)",
                   ...edgeStyle,
                 }}
               >
                 <div className="flex items-start justify-between gap-2">
                   <Link
                     href={`/admin/c/${it.contact_id}`}
-                    className="font-mono font-semibold leading-tight hover:underline truncate"
+                    className="text-[13px] font-medium leading-tight hover:text-[var(--color-dsc-red)] truncate"
+                    style={{ fontFamily: "var(--font-display)" }}
                   >
                     {it.line1}
                   </Link>
@@ -1221,7 +1228,7 @@ function AttentionPanel({
                     {it.badge}
                   </span>
                 </div>
-                <div className="font-mono text-[10px] mt-1 truncate text-[var(--color-muted-deep)]">
+                <div className="font-mono text-[10px] mt-0.5 truncate text-[var(--color-muted-deep)]">
                   {it.line2}
                 </div>
                 <div className="font-mono text-[10px] truncate text-[var(--color-muted)]">
@@ -1253,9 +1260,16 @@ function ActivationPanel({
   }>;
 }) {
   return (
-    <div className="space-y-2">
+    <div
+      className="flex flex-col"
+      style={{
+        background: "var(--color-bone-surface)",
+        border: "1px solid rgba(14,14,14,0.12)",
+        borderRadius: 8,
+      }}
+    >
       <div
-        className="flex items-baseline justify-between pb-1"
+        className="flex items-baseline justify-between px-4 py-2.5"
         style={{ borderBottom: "1px solid var(--color-dsc-red)" }}
       >
         <div>
@@ -1275,30 +1289,33 @@ function ActivationPanel({
       </div>
       {items.length === 0 ? (
         <p
-          className="py-3 font-mono text-[11px] uppercase tracking-[0.18em]"
+          className="px-4 py-4 font-mono text-[11px] uppercase tracking-[0.18em]"
           style={{ color: "var(--color-muted-deep)" }}
         >
           {empty}
         </p>
       ) : (
         <ul>
-          {items.map((it) => (
+          {items.map((it, idx) => (
             <li
               key={it.id}
-              className="py-2 flex items-center justify-between gap-3"
-              style={{ borderBottom: "1px solid rgba(14,14,14,0.08)" }}
+              className="px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-[var(--color-bone-deep)] transition"
+              style={{
+                borderTop:
+                  idx === 0 ? "none" : "1px solid rgba(14,14,14,0.08)",
+              }}
             >
               <Link
                 href={`/admin/c/${it.id}`}
                 className="flex-1 min-w-0 hover:text-[var(--color-dsc-red)]"
               >
                 <div
-                  className="text-[13px] font-medium truncate"
+                  className="text-[13px] font-medium leading-tight truncate"
                   style={{ fontFamily: "var(--font-display)" }}
                 >
                   {it.line1}
                 </div>
-                <div className="font-mono text-[10px] text-[var(--color-muted)] truncate">
+                <div className="font-mono text-[10px] text-[var(--color-muted)] truncate mt-0.5">
                   {it.line2}
                 </div>
               </Link>

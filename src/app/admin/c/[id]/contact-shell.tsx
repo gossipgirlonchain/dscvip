@@ -708,7 +708,14 @@ function Hero() {
   const { contact, patch } = useContact();
 
   return (
-    <header className="space-y-2.5 pr-20">
+    <header
+      className="space-y-2.5 px-5 py-4"
+      style={{
+        background: "var(--color-bone-surface)",
+        border: "1px solid rgba(14,14,14,0.12)",
+        borderRadius: 8,
+      }}
+    >
       <div className="flex items-start justify-between gap-6">
         <div className="min-w-0 flex-1">
           <h1
@@ -1510,7 +1517,14 @@ function GiftsLedger({ gifts }: { gifts: ContactGift[] }) {
   const [adding, setAdding] = useState(false);
 
   return (
-    <section className="relative mt-8">
+    <section
+      className="relative mt-8 px-5 py-4"
+      style={{
+        background: "var(--color-bone-surface)",
+        border: "1px solid rgba(14,14,14,0.12)",
+        borderRadius: 8,
+      }}
+    >
       <div className="flex items-end justify-between mb-3">
         <div className="flex items-baseline gap-2">
           <h2
@@ -1712,7 +1726,14 @@ function ContextFeed({ notes }: { notes: ContactNote[] }) {
   const [adding, setAdding] = useState(false);
 
   return (
-    <section>
+    <section
+      className="px-5 py-4"
+      style={{
+        background: "var(--color-bone-surface)",
+        border: "1px solid rgba(14,14,14,0.12)",
+        borderRadius: 8,
+      }}
+    >
       <div
         className="flex items-baseline justify-between mb-3 pb-1"
         style={{ borderBottom: "1px solid var(--color-dsc-red)" }}
@@ -1848,7 +1869,14 @@ function OutreachFeed({
   const [adding, setAdding] = useState(false);
 
   return (
-    <section>
+    <section
+      className="px-5 py-4"
+      style={{
+        background: "var(--color-bone-surface)",
+        border: "1px solid rgba(14,14,14,0.12)",
+        borderRadius: 8,
+      }}
+    >
       <div
         className="flex items-baseline justify-between mb-3 pb-1"
         style={{ borderBottom: "1px solid var(--color-dsc-red)" }}
@@ -2036,8 +2064,12 @@ function ActivityAccordion({
 
   return (
     <section
-      className="mt-12 pt-4"
-      style={{ borderTop: "1px solid rgba(14,14,14,0.12)" }}
+      className="mt-8 px-5 py-3"
+      style={{
+        background: "var(--color-bone-surface)",
+        border: "1px solid rgba(14,14,14,0.12)",
+        borderRadius: 8,
+      }}
     >
       <button
         onClick={() => setOpen((o) => !o)}
