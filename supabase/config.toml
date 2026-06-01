@@ -1,0 +1,5 @@
+# Telegram webhook and the internal /notify caller authenticate via their own
+# secrets (checked inside the function), not a Supabase JWT — so JWT
+# verification must be off for this function.
+[functions.telegram-bot]
+verify_jwt = false
