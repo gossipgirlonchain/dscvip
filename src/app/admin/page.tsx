@@ -500,6 +500,10 @@ export default async function AdminPage({
     <main className="dsc-bone relative flex-1 px-12 py-8 max-w-[1280px] w-full mx-auto space-y-8">
       <AdminNav active="pipeline" />
 
+      <div className="flex justify-end">
+        <AddVip />
+      </div>
+
       {/* ─── KPI strip ─── */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Kpi label="ship today" count={shipTodayCount} />
@@ -629,12 +633,9 @@ export default async function AdminPage({
           >
             contacts
           </h2>
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
-              [{totals.all}]
-            </span>
-            <AddVip />
-          </div>
+          <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
+            [{totals.all}]
+          </span>
         </div>
 
         {/* Lifecycle chips */}
