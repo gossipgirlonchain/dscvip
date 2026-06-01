@@ -1335,6 +1335,8 @@ function SizingEditor() {
   );
 }
 
+const PRESET_TAGS = ["recurring", "one-time"];
+
 function TagsEditor() {
   const { contact, patch } = useContact();
   const [draft, setDraft] = useState("");
@@ -1346,6 +1348,8 @@ function TagsEditor() {
     patch({ tags: [...contact.tags, v] });
     setDraft("");
   };
+
+  const presets = PRESET_TAGS.filter((t) => !contact.tags.includes(t));
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
@@ -1383,6 +1387,16 @@ function TagsEditor() {
         placeholder={contact.tags.length ? "+ tag" : "+ add tag"}
         className="font-mono text-[11px] bg-transparent placeholder:text-muted focus:outline-none focus:border-[#E11D48] border-b border-transparent min-w-[80px]"
       />
+      {presets.map((t) => (
+        <button
+          key={t}
+          onClick={() => commit(t)}
+          title="Add tag"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-dashed border-[#D6D6D4] hover:border-[#E11D48] hover:text-[#E11D48] font-mono text-[11px] text-muted-fg transition"
+        >
+          + {t}
+        </button>
+      ))}
     </div>
   );
 }

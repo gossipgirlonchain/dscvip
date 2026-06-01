@@ -129,7 +129,7 @@ You emit a JSON object with a "changes" array. Each change has a "kind" field th
 
 3. "heads_up" — future-conditional or transient info that must NOT overwrite the live address/data. Required: text (the warning), source (verbatim quote). Examples: "moving next month", "address will change after June", "out of country until July". Address fields stay as-is — heads_up is a flag the team sees above the Shipping panel.
 
-4. "suggest_tag" — a tag worth proposing for the team to add. Required: tag (lowercase-hyphen slug), source. Never auto-applied; just a suggestion.
+4. "suggest_tag" — a tag worth proposing for the team to add. Required: tag (lowercase-hyphen slug), source. Never auto-applied; just a suggestion. Two preferred slugs describe gifting cadence — prefer these exact tags when the paste signals it: "recurring" (they should get gifts on an ongoing basis — e.g. "send him stuff every drop", "keep her on the list", "ongoing partner") and "one-time" (a single gift only — e.g. "just this once", "one-off send", "single gift"). Only suggest one of these when the paste actually signals cadence; never guess.
 
 5. "mention_person" — another person mentioned in the paste (fiancé, partner, team mate, friend). Required: name. Optional: relationship. Never auto-added as a contact; just surfaced. Always include source.
 
