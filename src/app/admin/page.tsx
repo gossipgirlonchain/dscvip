@@ -130,10 +130,11 @@ function ageEdge(g: ContactGift): "ok" | "aging" | "stuck" {
 }
 
 const PIPELINE_COLUMNS: Array<{
-  key: "queued" | "packed" | "shipped" | "delivered" | "posted";
+  key: "requested" | "queued" | "packed" | "shipped" | "delivered" | "posted";
   label: string;
   isWin?: boolean;
 }> = [
+  { key: "requested", label: "requested" },
   { key: "queued", label: "queued" },
   { key: "packed", label: "packed" },
   { key: "shipped", label: "in transit" },
@@ -172,7 +173,7 @@ export default async function AdminPage({
     .select(
       "*, contacts(id, full_name, display_name, address_line1, lifecycle), products(name, image_url, drops(name))"
     )
-    .in("status", ["queued", "packed", "shipped", "delivered"])
+    .in("status", ["requested", "queued", "packed", "shipped", "delivered"])
     .order("created_at", { ascending: true })
     .limit(500);
 
@@ -390,6 +391,7 @@ export default async function AdminPage({
 
   // Stage counts for pipeline column headers
   const stageCounts: Record<string, number> = {
+    requested: 0,
     queued: 0,
     packed: 0,
     shipped: 0,
@@ -397,7 +399,8 @@ export default async function AdminPage({
     posted: 0,
   };
   for (const r of allGiftRows) {
-    if (r.status === "queued") stageCounts.queued += 1;
+    if (r.status === "requested") stageCounts.requested += 1;
+    else if (r.status === "queued") stageCounts.queued += 1;
     else if (r.status === "packed") stageCounts.packed += 1;
     else if (r.status === "shipped") stageCounts.shipped += 1;
     else if (r.status === "delivered") stageCounts.delivered += 1;
@@ -519,7 +522,7 @@ export default async function AdminPage({
       {/* ─── Pipeline board ─── */}
       <section>
         <div
-          className="grid grid-cols-2 md:grid-cols-5 overflow-hidden"
+          className="grid grid-cols-2 md:grid-cols-6 overflow-hidden"
           style={{
             border: "1px solid rgba(14,14,14,0.12)",
             background: "var(--color-bone-surface)",

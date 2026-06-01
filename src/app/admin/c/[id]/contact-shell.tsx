@@ -38,6 +38,7 @@ import {
   type SizeBand,
 } from "@/types/db";
 import { SmartPasteButton } from "./smart-paste";
+import { ActivateButton } from "./activate-button";
 import { LogGiftPicker } from "./log-gift-picker";
 
 /* ─────────────────────────────────────────────────────────────────────
@@ -788,6 +789,7 @@ function Hero() {
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           <div className="flex items-center gap-2">
+            <ActivateButton contactId={contact.id} />
             <SmartPasteButton contactId={contact.id} />
             <SaveIndicator />
             <HeroKebab />
