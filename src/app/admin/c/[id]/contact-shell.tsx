@@ -1494,6 +1494,11 @@ function fmtDate(iso: string | null | undefined): string {
 /* DSC stamp pills — single accent (oxblood). Active states use red fill,
    bone text. Inactive/in-progress states use red border, varying tints. */
 const GIFT_STATUS_STAMP: Record<GiftStatus, React.CSSProperties> = {
+  requested: {
+    border: "1px dashed var(--color-muted)",
+    background: "transparent",
+    color: "var(--color-muted-deep)",
+  },
   queued: {
     border: "1px solid var(--color-muted)",
     background: "transparent",
@@ -1523,6 +1528,11 @@ const GIFT_STATUS_STAMP: Record<GiftStatus, React.CSSProperties> = {
     border: "1px dashed var(--color-dsc-red)",
     background: "transparent",
     color: "var(--color-dsc-red)",
+  },
+  skipped: {
+    border: "1px dashed var(--color-muted)",
+    background: "transparent",
+    color: "var(--color-muted-deep)",
   },
 };
 

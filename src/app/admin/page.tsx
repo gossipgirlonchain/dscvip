@@ -82,6 +82,8 @@ function fmtAge(iso: string | null | undefined): string {
 
 function stageStartedAt(g: ContactGift): string {
   switch (g.status) {
+    case "requested":
+      return g.requested_at ?? g.created_at;
     case "queued":
       return g.created_at;
     case "packed":
@@ -94,6 +96,8 @@ function stageStartedAt(g: ContactGift): string {
       return g.posted_at ?? g.updated_at;
     case "returned":
       return g.returned_at ?? g.updated_at;
+    case "skipped":
+      return g.skipped_at ?? g.updated_at;
   }
 }
 

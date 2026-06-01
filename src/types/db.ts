@@ -19,20 +19,24 @@ export const LIFECYCLE_LABEL: Record<Lifecycle, string> = {
 };
 
 export type GiftStatus =
+  | "requested"
   | "queued"
   | "packed"
   | "shipped"
   | "delivered"
   | "posted"
-  | "returned";
+  | "returned"
+  | "skipped";
 
 export const GIFT_STATUSES: GiftStatus[] = [
+  "requested",
   "queued",
   "packed",
   "shipped",
   "delivered",
   "posted",
   "returned",
+  "skipped",
 ];
 
 export type TouchChannel =
@@ -144,13 +148,22 @@ export type Contact = {
 export type ContactGift = {
   id: string;
   contact_id: string;
-  /** Legacy free-text fields. Both null for catalog-linked rows. */
-  item: string;
+  /**
+   * What was sent. Free text. Null for a 'requested' gift where Simmone
+   * hasn't yet recorded the item via /sent.
+   */
+  item: string | null;
   drop_name: string | null;
   /** Catalog link (added 2026-05-10). Null for legacy free-text rows. */
   product_id: string | null;
   size: string | null;
   status: GiftStatus;
+  // Request provenance (Telegram-driven activation / PR request).
+  requested_at: string | null;
+  requested_by: string | null;
+  request_reason: string | null;
+  skipped_at: string | null;
+  skip_reason: string | null;
   sent_at: string | null;
   packed_at: string | null;
   delivered_at: string | null;
@@ -162,6 +175,17 @@ export type ContactGift = {
   logged_by: string | null;
   created_at: string;
   updated_at: string;
+};
+
+export type TelegramMessage = {
+  id: string;
+  message_id: number;
+  chat_id: number;
+  gift_id: string | null;
+  contact_id: string | null;
+  kind: string;
+  code: string | null;
+  created_at: string;
 };
 
 export type NoteSource = "manual" | "paste" | "outreach";
