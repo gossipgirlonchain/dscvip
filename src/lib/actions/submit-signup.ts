@@ -2,6 +2,7 @@
 
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { SIZE_BANDS, type SizeBand } from "@/types/db";
+import { notifyTelegram } from "@/lib/telegram/notify";
 
 export type SubmitResult =
   | { ok: true }
@@ -89,32 +90,38 @@ export async function submitSignup(
     }
   }
 
-  const { error: insertErr } = await supabase.from("contacts").insert({
-    token,
-    email,
-    full_name,
-    project,
-    address_line1,
-    address_line2,
-    city_region,
-    country,
-    postal_code,
-    x_handle,
-    instagram_handle,
-    telegram_handle,
-    shirt_size,
-    pants_size,
-    shorts_size,
-    sweatshirt_size,
-    shoe_size,
-    hat_size,
-    source: "public",
-    lifecycle: "vip",
-  });
+  const { data: inserted, error: insertErr } = await supabase
+    .from("contacts")
+    .insert({
+      token,
+      email,
+      full_name,
+      project,
+      address_line1,
+      address_line2,
+      city_region,
+      country,
+      postal_code,
+      x_handle,
+      instagram_handle,
+      telegram_handle,
+      shirt_size,
+      pants_size,
+      shorts_size,
+      sweatshirt_size,
+      shoe_size,
+      hat_size,
+      source: "public",
+      lifecycle: "vip",
+    })
+    .select("id")
+    .maybeSingle();
 
-  if (insertErr) {
+  if (insertErr || !inserted) {
     return { ok: false, error: "Couldn’t save. Try again in a moment." };
   }
+
+  await notifyTelegram({ kind: "new_vip", contact_id: inserted.id as string });
 
   if (token) {
     const { data: invite } = await supabase

@@ -19,6 +19,7 @@ import {
   type Diff,
   type DiffChange,
 } from "@/lib/llm/paste-parser";
+import { notifyTelegram } from "@/lib/telegram/notify";
 
 async function requireAdmin() {
   if (!(await isAdminAuthed())) {
@@ -776,8 +777,52 @@ export async function createContactFromPaste(
   ];
   await supabase.from("contact_notes").insert(noteRows);
 
+  await notifyTelegram({ kind: "new_vip", contact_id: data.id as string });
+
   revalidatePath("/admin");
   return { ok: true, id: data.id as string };
+}
+
+/**
+ * "Activate" a VIP / log a PR gift request. Creates a gift in the 'requested'
+ * state and pings Simmone in Telegram with the contact's decision context
+ * (handles, sizes, shipping). She replies there with / commands to record
+ * what she sends, which flows straight back into this gift row.
+ */
+export async function activateVip(
+  contactId: string,
+  reason: string | null
+): Promise<{ ok: true; gift_id: string } | { ok: false; error: string }> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  if (!contactId) return { ok: false, error: "Missing contact id." };
+
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("contact_gifts")
+    .insert({
+      contact_id: contactId,
+      status: "requested",
+      requested_at: new Date().toISOString(),
+      request_reason: reason?.trim() || null,
+    })
+    .select("id")
+    .maybeSingle();
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? "Insert failed." };
+  }
+
+  await notifyTelegram({
+    kind: "activation",
+    contact_id: contactId,
+    gift_id: data.id as string,
+    request_reason: reason?.trim() || null,
+  });
+
+  revalidatePath(`/admin/c/${contactId}`);
+  revalidatePath("/admin");
+  return { ok: true, gift_id: data.id as string };
 }
 
 /* ───── context notes feed ───── */
