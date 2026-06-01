@@ -650,6 +650,130 @@ export async function applyPasteDiff(
   return { ok: true, applied, skipped };
 }
 
+/**
+ * Create a brand-new VIP from freeform pasted context alone. Runs the paste
+ * through the same LLM parser used for the contact detail page, but against
+ * a blank contact so every extractable field becomes a fresh value. Anything
+ * that doesn't map to a structured field (and the original paste itself) is
+ * stored as context notes so nothing is lost. Returns the new contact id so
+ * the client can navigate to it.
+ */
+export async function createContactFromPaste(
+  paste: string
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  if (!(await isAdminAuthed())) {
+    return { ok: false, error: "Not authenticated." };
+  }
+  const trimmed = paste.trim();
+  if (!trimmed) return { ok: false, error: "Paste is empty." };
+  if (trimmed.length > 20_000) {
+    return { ok: false, error: "Paste is too long (max 20K chars)." };
+  }
+
+  // Blank contact so the parser proposes a value for every field it can find.
+  const blank = {
+    email: null,
+    full_name: null,
+    display_name: null,
+    project: null,
+    community: null,
+    base_city: null,
+    timezone: null,
+    x_handle: null,
+    instagram_handle: null,
+    telegram_handle: null,
+    wallet_address: null,
+    phone: null,
+    introduced_by: null,
+    shipping_recipient: null,
+    address_line1: null,
+    address_line2: null,
+    city_region: null,
+    country: null,
+    postal_code: null,
+    shirt_size: null,
+    pants_size: null,
+    shorts_size: null,
+    sweatshirt_size: null,
+    shoe_size: null,
+    hat_size: null,
+  } as unknown as Contact;
+
+  let diff: Diff;
+  try {
+    diff = await parsePasteDiff(blank, trimmed);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Unknown LLM error.";
+    return { ok: false, error: msg };
+  }
+
+  const insert: Record<string, unknown> = {
+    lifecycle: "vip",
+    source: "admin",
+  };
+  const notes: string[] = [];
+  const tags = new Set<string>();
+  let headsUp: string | null = null;
+
+  for (const change of diff.changes) {
+    switch (change.kind) {
+      case "set": {
+        if (!ALLOWED_SETTABLE.has(change.field)) break;
+        const value = change.value.trim();
+        if (!value) break;
+        if (SIZE_FIELDS.has(change.field)) {
+          const upper = value.toUpperCase();
+          if (isValidSizeBand(upper)) insert[change.field] = upper;
+        } else {
+          insert[change.field] = value;
+        }
+        break;
+      }
+      case "append_context":
+        notes.push(change.text.trim());
+        break;
+      case "heads_up":
+        headsUp = `${change.text.trim()}\n— Source: ${change.source.trim()}`;
+        break;
+      case "suggest_tag":
+        // For a fresh contact built from this paste, auto-apply suggested
+        // tags — they came straight from the text the team is entering.
+        tags.add(change.tag.trim().toLowerCase().replace(/\s+/g, "-"));
+        break;
+      case "mention_person":
+        break;
+    }
+  }
+
+  if (headsUp) insert.heads_up = headsUp;
+  if (tags.size > 0) insert.tags = Array.from(tags);
+
+  const supabase = createServiceRoleClient();
+  const { data, error } = await supabase
+    .from("contacts")
+    .insert(insert)
+    .select("id")
+    .maybeSingle();
+  if (error || !data) {
+    return { ok: false, error: error?.message ?? "Insert failed." };
+  }
+
+  // Always keep the original paste as the first note, plus any qualitative
+  // context the parser pulled out. Each becomes an independent feed row.
+  const noteRows = [
+    { contact_id: data.id, body: trimmed, source: "paste" as const },
+    ...notes.map((body) => ({
+      contact_id: data.id,
+      body,
+      source: "paste" as const,
+    })),
+  ];
+  await supabase.from("contact_notes").insert(noteRows);
+
+  revalidatePath("/admin");
+  return { ok: true, id: data.id as string };
+}
+
 /* ───── context notes feed ───── */
 
 export async function addContactNote(formData: FormData) {

@@ -16,6 +16,7 @@ import { CopyLink } from "./copy-link";
 import { AdminNav } from "@/components/admin/nav";
 import { MarkPosted } from "./mark-posted";
 import { StatusSelect } from "./status-select";
+import { AddVip } from "./add-vip";
 
 export const dynamic = "force-dynamic";
 
@@ -628,9 +629,12 @@ export default async function AdminPage({
           >
             contacts
           </h2>
-          <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
-            [{totals.all}]
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[10px] text-[var(--color-dsc-red)]">
+              [{totals.all}]
+            </span>
+            <AddVip />
+          </div>
         </div>
 
         {/* Lifecycle chips */}
