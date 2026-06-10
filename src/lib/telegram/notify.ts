@@ -212,36 +212,14 @@ export async function notifyTelegram(payload: NotifyPayload): Promise<void> {
 
     const c = contact as ContactRow;
 
-    let text: string;
-    let keyboard:
-      | Array<Array<{ text: string; callback_data: string }>>
-      | undefined;
+    // No inline keyboard — gifts are kicked off from Shopify, not the bot.
+    // The notification is informational: Simonne reads, opens Shopify, ships.
+    const text =
+      payload.kind === "new_vip"
+        ? buildNewVipMessage(c)
+        : buildActivationMessage(c, payload.gift_id, payload.request_reason);
 
-    if (payload.kind === "new_vip") {
-      text = buildNewVipMessage(c);
-      keyboard = c.do_not_gift
-        ? undefined
-        : [
-            [
-              {
-                text: "🎁 Start gift →",
-                callback_data: `start_gift:${c.id}`,
-              },
-            ],
-          ];
-    } else {
-      text = buildActivationMessage(c, payload.gift_id, payload.request_reason);
-      keyboard = [
-        [
-          {
-            text: "🎁 Pick product →",
-            callback_data: `start_gift:${c.id}`,
-          },
-        ],
-      ];
-    }
-
-    const result = await sendTelegramMessage(botToken, chatId, text, keyboard);
+    const result = await sendTelegramMessage(botToken, chatId, text);
 
     if (!result.ok) {
       console.error(
