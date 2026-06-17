@@ -11,6 +11,7 @@ when they get back.
 - `/s/[token]` — secret signup form. Only valid invite tokens render the form.
 - `/admin/login` — shared-password gate for the team.
 - `/admin` — mint/revoke invite links, see the gifting list, add people manually.
+- `/radar` - reply guy for twitter and creator outreach
 
 ## Setup
 
